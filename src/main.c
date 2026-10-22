@@ -84,7 +84,7 @@ static int run_selftest(AppConfig *cfg)
     check("기타 목적 만들기 (purpose_make_custom)", purpose_make_custom("발표 연습 상대", &custom));
     purpose_free(&custom);
 
-    printf("\n[2] 변: 페르소나\n");
+    printf("\n[2] 손석현: 페르소나\n");
     PersonaInfo *list = NULL;
     size_t nl = 0;
     check("캐릭터 목록 (persona_list)", persona_list(&list, &nl));
@@ -117,7 +117,7 @@ static int run_selftest(AppConfig *cfg)
         persona_free(&created);
     }
 
-    printf("\n[3] 똥: 대화 기록\n");
+    printf("\n[3] 오승민: 대화 기록\n");
     Conversation c, recent;
     conversation_init(&c);
     check("메시지 추가 (conversation_push)", conversation_push(&c, ROLE_USER, "안녕"));
@@ -129,7 +129,7 @@ static int run_selftest(AppConfig *cfg)
     conversation_free(&c);
     check("기록 초기화 (memory_clear)", memory_clear(first_id));
 
-    printf("\n[4] 똥: API 엔진 (대화 한 턴)\n");
+    printf("\n[4] 오승민: API 엔진 (대화 한 턴)\n");
     ChatRequest req = { first_id, study, "안녕, 오늘 물리 공부 좀 도와줄래?", 0 };
     char *reply = NULL;
     printf("         답변: ");
