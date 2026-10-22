@@ -1,7 +1,7 @@
 /*
  * api.h — 대화 처리 및 LLM API 연결 엔진
  * [공통 파일: 규격] 이 헤더의 수정은 PR + 팀원 3명 확인 후에만
- * [구현 담당: 똥]   src/api.c
+ * [구현 담당: 오승민]   src/api.c
  *
  * 제안서 기준:
  *   - libcurl + pthread 로 외부 LLM API와 통신 (요청은 작업 스레드에서 수행)
@@ -11,8 +11,8 @@
  *   - 스트리밍 응답 처리: 답변을 조각(chunk)으로 받아 콜백으로 전달
  *
  * 사용하는 쪽:
- *   응가(ui.c)       → api_chat()
- *   변(persona.c)    → api_complete(), api_search()
+ *   곽수호(ui.c)       → api_chat()
+ *   손석현(persona.c)    → api_complete(), api_search()
  */
 #ifndef OST3_API_H
 #define OST3_API_H
