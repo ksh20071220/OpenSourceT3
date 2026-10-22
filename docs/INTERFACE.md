@@ -11,10 +11,10 @@
 | 운영체제 차이 처리 | `platform.h` | `platform.c` | 공통 | — |
 | 설정·API 회사 목록 | `config.h` | `config.c` | 공통 | 사용자 API 키 입력 |
 | 사용 목적 | `purpose.h` | `purpose.c` | 공통 | 사용자 입력 처리(의도 분류) |
-| 채팅 화면 | `ui.h` | `ui.c` | 응가 | 사용자 |
-| API 엔진 | `api.h` | `api.c` | 똥 | 대화 처리 및 모델 라우팅, LLM API 연동, 출력 후처리, 웹 검색 |
-| 대화 기록 | `memory.h` | `memory.c` | 똥 | 대화 기록 및 기억 관리, 로컬 저장소(대화 기록) |
-| 페르소나 | `persona.h` | `persona.c` | 변 | 페르소나 추론 모듈, 자료 정제·필터링, 로컬 저장소(페르소나) |
+| 채팅 화면 | `ui.h` | `ui.c` | 곽수호 | 사용자 |
+| API 엔진 | `api.h` | `api.c` | 오승민 | 대화 처리 및 모델 라우팅, LLM API 연동, 출력 후처리, 웹 검색 |
+| 대화 기록 | `memory.h` | `memory.c` | 오승민 | 대화 기록 및 기억 관리, 로컬 저장소(대화 기록) |
+| 페르소나 | `persona.h` | `persona.c` | 손석현 | 페르소나 추론 모듈, 자료 정제·필터링, 로컬 저장소(페르소나) |
 
 ## 2. 호출 흐름
 
@@ -33,7 +33,7 @@ ui.c ◀──────── 답변 ─────────────�
 [새 캐릭터 만들기]
 ui.c ──persona_create(이름, 작품, 키워드, on_progress)──▶ persona.c
                                                          ├─ api_search(...)          ▶ api.c
-                                                         ├─ 근거 신뢰도 평가 (변)
+                                                         ├─ 근거 신뢰도 평가 (손석현)
                                                          ├─ api_complete(TIER_HEAVY)  ▶ api.c   (인격 추론)
                                                          ├─ persona_validate
                                                          └─ data/personas/<id>.json 저장
@@ -56,7 +56,7 @@ ui.c ◀──── Persona + 진행률 ─────────────
 
 | 결정 | 이유 |
 |---|---|
-| **캐릭터 설명문은 변이 만들고(`persona_build_prompt`), 똥은 받아서 요청을 조립** | JSON 구조를 아는 사람이 고르는 게 맞음. 변이 구조를 바꿔도 똥 코드가 안 깨짐. 제안서 그림 2의 "페르소나 구조화 → 시스템 프롬프트 생성"과 일치 |
+| **캐릭터 설명문은 손석현이 만들고(`persona_build_prompt`), 오승민은 받아서 요청을 조립** | JSON 구조를 아는 사람이 고르는 게 맞음. 손석현이 구조를 바꿔도 오승민 코드가 안 깨짐. 제안서 그림 2의 "페르소나 구조화 → 시스템 프롬프트 생성"과 일치 |
 | **API는 OpenAI 호환 형식 하나로** OpenAI·Gemini·Claude 지원 | 요청 형식 하나만 구현하면 됨 (회사별로 `base_url` 만 다름). Gemini 호환은 베타, Claude 호환은 공식적으로 테스트·비교용이며 JSON 출력 모드 미지원 → 생성 결과는 반드시 `persona_validate` |
 | **콘솔 UI** | 제안서에 GUI 지정 없음. Windows·Linux 공통으로 가장 단순. 나중에 `ui.c` 만 바꾸면 GUI 가능 |
 | **cJSON** | 파일 하나라 넣기 쉬움. MIT 라이선스로 GPL v3와 호환 |
