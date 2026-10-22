@@ -1,6 +1,6 @@
 /*
  * memory.c — 대화 기록 및 기억 관리
- * [담당: 똥] 이 파일은 똥만 수정한다. 규격(함수 모양)은 include/memory.h
+ * [담당: 오승민] 이 파일은 오승민만 수정한다. 규격(함수 모양)은 include/memory.h
  *
  * ─────────────────────────────────────────────────────────────
  *  현재 상태: 깡통(더미) 구현
@@ -8,7 +8,7 @@
  *   - memory_load/append/clear/summary 는 파일 대신 "프로그램 메모리"에만
  *     저장한다. 프로그램을 끄면 사라진다.
  *
- *  TODO(똥):
+ *  TODO(오승민):
  *   [ ] <data_dir>/history/<character_id>.jsonl 파일에 한 줄에 메시지 하나씩 저장
  *       (platform_append_file, platform_read_file 사용 → Windows 한글 경로 자동 대응)
  *   [ ] memory_load 에서 파일을 읽어 Conversation 으로 복원
@@ -111,7 +111,7 @@ static void free_slot(Slot *s)
 int memory_load(const char *character_id, Conversation *out)
 {
     if (!character_id || !out) return ERR_INVALID_ARG;
-    (void)g_cfg; /* TODO(똥): g_cfg->data_dir 아래 history 폴더에서 읽기 */
+    (void)g_cfg; /* TODO(오승민): g_cfg->data_dir 아래 history 폴더에서 읽기 */
     conversation_init(out);
     Slot *s = find_slot(character_id, 0);
     if (!s) return ERR_OK;
