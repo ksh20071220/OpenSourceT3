@@ -1,15 +1,15 @@
 /*
  * persona.h — 페르소나 생성 및 관리 (근거 평가·인격 추론)
  * [공통 파일: 규격] 이 헤더의 수정은 PR + 팀원 3명 확인 후에만
- * [구현 담당: 변]   src/persona.c
+ * [구현 담당: 손석현]   src/persona.c
  *
- * 페르소나 = 캐릭터 설정집 JSON. 형식은 docs/persona-schema.md (변 관리).
+ * 페르소나 = 캐릭터 설정집 JSON. 형식은 docs/persona-schema.md (손석현 관리).
  *   저장 위치: <data_dir>/personas/<id>.json
  *   샘플:      <assets_dir>/personas/<id>.json
  *   캐릭터 ID = 파일 이름(확장자 제외). 영문 소문자·숫자·_ 만 사용.
  *
  * 다른 모듈은 JSON을 직접 파싱하지 않고 아래 함수로만 접근한다.
- * (변이 JSON 구조를 바꿔도 다른 사람 코드가 깨지지 않게 하기 위함)
+ * (손석현이 JSON 구조를 바꿔도 다른 사람 코드가 깨지지 않게 하기 위함)
  */
 #ifndef OST3_PERSONA_H
 #define OST3_PERSONA_H
