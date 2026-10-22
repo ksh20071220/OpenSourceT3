@@ -40,14 +40,14 @@ VSCode에서는 `Ctrl+Shift+B` 로 빌드할 수 있습니다.
 include/        모듈 간 규격(헤더)                          [공통]
 src/
   main.c, common.c, platform.c, config.c, purpose.c        [공통]
-  ui.c                                                      [응가]
-  api.c, memory.c                                           [똥]
-  persona.c                                                 [변]
+  ui.c                                                      [곽수호]
+  api.c, memory.c                                           [오승민]
+  persona.c                                                 [손석현]
 lib/cjson/      JSON 라이브러리 (cJSON, MIT)                 [공통]
 assets/
   providers.json  API 회사 목록·키 발급 안내               [공통]
   purposes.json   사용 목적 목록                           [공통]
-  personas/       샘플 페르소나 (자체 창작만)              [변]
+  personas/       샘플 페르소나 (자체 창작만)              [손석현]
 data/           사용자 데이터: 설정·API 키·페르소나·대화 기록 (git 제외)
 docs/           제안서와 개발 문서
 ```
@@ -80,5 +80,5 @@ docs/           제안서와 개발 문서
 
 ## 라이선스
 
-현재 저장소의 LICENSE는 MIT입니다. 제안서에 따라 **GPL v3로 변경할 예정**입니다(팀장 결정 후 반영).
+현재 저장소의 LICENSE는 MIT입니다. 제안서에 따라 **GPL v3로 손석현경할 예정**입니다(팀장 결정 후 반영).
 포함된 cJSON은 MIT 라이선스이며 GPL v3와 함께 쓸 수 있습니다 (`lib/cjson/LICENSE`).
