@@ -1,6 +1,6 @@
 /*
  * api.c — 대화 처리 및 LLM API 연결 엔진
- * [담당: 똥] 이 파일은 똥만 수정한다. 규격(함수 모양)은 include/api.h
+ * [담당: 오승민] 이 파일은 오승민만 수정한다. 규격(함수 모양)은 include/api.h
  *
  * ─────────────────────────────────────────────────────────────
  *  현재 상태: 깡통(더미) 구현
@@ -9,7 +9,7 @@
  *     조각조각 만들어 콜백으로 넘긴다 (스트리밍 흉내)
  *   - api_complete / api_search 는 고정 결과를 돌려준다
  *
- *  TODO(똥):
+ *  TODO(오승민):
  *   [ ] 요청 JSON 만들기 (OpenAI 호환 chat/completions 형식, cJSON 사용)
  *       messages = [system: 안전 지시문 + 캐릭터 설명문 + 목적 지시문 + 장기 기억,
  *                   ...최근 대화, user: 입력]
@@ -77,7 +77,7 @@ typedef struct {
 static void *worker_main(void *arg)
 {
     Worker *w = arg;
-    /* TODO(똥): 여기서 libcurl 요청을 보내고, 받은 조각마다 on_chunk 호출 */
+    /* TODO(오승민): 여기서 libcurl 요청을 보내고, 받은 조각마다 on_chunk 호출 */
     const char *p = w->text;
     char chunk[64];
     while (*p) {
@@ -128,7 +128,7 @@ int api_chat(const ChatRequest *req, ApiChunkFn on_chunk, void *user, char **rep
     ModelTier tier = req->purpose ? req->purpose->tier : TIER_LIGHT;
     const char *model = choose_model(tier);
 
-    /* TODO(똥): SAFETY_PROMPT + character_prompt + purpose->instruction + recent + user_text
+    /* TODO(오승민): SAFETY_PROMPT + character_prompt + purpose->instruction + recent + user_text
      *           로 요청 JSON을 만든다. 지금은 쓰지 않으므로 길이만 확인. */
     (void)SAFETY_PROMPT;
 
