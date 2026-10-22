@@ -24,9 +24,9 @@
 
 | 담당 | 수정 가능한 파일 |
 |---|---|
-| 응가 (곽수호) | `src/ui.c` |
-| 똥 (오승민) | `src/api.c`, `src/memory.c` |
-| 변 (손석현) | `src/persona.c`, `docs/persona-schema.md`, `assets/personas/` |
+| 곽수호 | `src/ui.c` |
+| 오승민 | `src/api.c`, `src/memory.c` |
+| 손석현 | `src/persona.c`, `docs/persona-schema.md`, `assets/personas/` |
 | 공통 | 그 밖의 모든 파일 (`include/` 전체, `src/main.c`, `src/common.c`, `src/platform.c`, `src/config.c`, `src/purpose.c`, `lib/`, `assets/*.json`, `Makefile`, 문서, 설정) |
 
 규칙:
