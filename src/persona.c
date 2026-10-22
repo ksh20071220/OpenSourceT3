@@ -1,7 +1,7 @@
 /*
  * persona.c — 페르소나 생성 및 관리 (근거 평가·인격 추론)
- * [담당: 변] 이 파일은 변만 수정한다. 규격(함수 모양)은 include/persona.h
- *            JSON 형식 문서는 docs/persona-schema.md (변 관리)
+ * [담당: 손석현] 이 파일은 손석현만 수정한다. 규격(함수 모양)은 include/persona.h
+ *            JSON 형식 문서는 docs/persona-schema.md (손석현 관리)
  *
  * ─────────────────────────────────────────────────────────────
  *  현재 상태: 깡통(더미) 구현
@@ -10,7 +10,7 @@
  *   - persona_create 는 검색·추론 없이 샘플을 복사해 이름만 바꾼다
  *   - persona_build_prompt 는 이름·말투·가치관 정도만 넣는다
  *
- *  TODO(변):
+ *  TODO(손석현):
  *   [ ] persona_create: api_search()로 설정·대사·행적 수집 → 출처별 신뢰도 평가
  *       → api_complete(TIER_HEAVY)로 근거 기반 인격 추론 → JSON 생성 → 검증 → 저장
  *   [ ] persona_build_prompt: 사용자 입력과 관련된 behavior_rules, 목적에 맞는
@@ -69,7 +69,7 @@ int persona_validate(const char *json)
     if (!json) return ERR_INVALID_ARG;
     cJSON *root = cJSON_Parse(json);
     if (!root) return ERR_PARSE;
-    /* TODO(변): 필수 필드 전체 검사 (지금은 최소 필드만) */
+    /* TODO(손석현): 필수 필드 전체 검사 (지금은 최소 필드만) */
     const cJSON *ver = cJSON_GetObjectItemCaseSensitive(root, "schema_version");
     const cJSON *ch = cJSON_GetObjectItemCaseSensitive(root, "character");
     const cJSON *name = cJSON_GetObjectItemCaseSensitive(ch, "name");
@@ -199,7 +199,7 @@ int persona_create(const PersonaCreateRequest *req, PersonaProgressFn on_progres
     cJSON_Delete(root);
     if (!json) return ERR_NO_MEMORY;
 
-    /* 4. 저장: ID는 char_1, char_2 … 중 빈 번호 (TODO(변): 이름 기반 ID 규칙 정하기) */
+    /* 4. 저장: ID는 char_1, char_2 … 중 빈 번호 (TODO(손석현): 이름 기반 ID 규칙 정하기) */
     progress(on_progress, user, "저장 중", 95);
     char id[OST3_ID_MAX], path[OST3_PATH_MAX];
     for (int i = 1; i < 10000; i++) {
@@ -264,7 +264,7 @@ int persona_build_prompt(const Persona *p, const Purpose *purpose,
 {
     if (!p || !p->json || !out) return ERR_INVALID_ARG;
     *out = NULL;
-    (void)user_text; /* TODO(변): 입력과 관련된 behavior_rules 고르기 */
+    (void)user_text; /* TODO(손석현): 입력과 관련된 behavior_rules 고르기 */
 
     cJSON *root = cJSON_Parse(p->json);
     if (!root) return ERR_PARSE;
