@@ -1,7 +1,7 @@
 # 페르소나 JSON 형식 (schema_version 1.0 초안)
 
-> **담당: 변.** 이 문서와 `src/persona.c`, `assets/personas/` 는 변이 관리합니다.
-> 다른 모듈은 JSON을 직접 읽지 않고 `persona.h` 함수만 쓰므로, 아래 형식은 변이 자유롭게 바꿔도 됩니다.
+> **담당: 손석현.** 이 문서와 `src/persona.c`, `assets/personas/` 는 손석현이 관리합니다.
+> 다른 모듈은 JSON을 직접 읽지 않고 `persona.h` 함수만 쓰므로, 아래 형식은 손석현이 자유롭게 바꿔도 됩니다.
 > 단, `schema_version`, `character.name`, `character.source` 는 다른 기능(목록 화면 등)이 쓰므로 유지합니다.
 
 ## 저장 위치와 ID
@@ -39,9 +39,9 @@
 | `expertise` | 객체 | | `strengths`, `limitations` (학습·실무 목적에서 우선 참조) |
 | `uncertainties[]` | 배열 | | 자료로 확인 못 한 부분: `question`, `status` (`unresolved` / `inferred`) |
 
-## 검토 제안 (변이 결정)
+## 검토 제안 (손석현이 결정)
 
-팀 회의 때 나온 의견입니다. 채택 여부는 변이 정하고, 정하면 위 표에 반영합니다.
+팀 회의 때 나온 의견입니다. 채택 여부는 손석현이 정하고, 정하면 위 표에 반영합니다.
 
 1. **`evidence[].type` 추가** (`"scene"` / `"description"`): 지금 E001은 장면형, E002는 설명형으로 모양이 달라서 코드에서 구분하기 쉽게.
 2. **`evidence[].reliability` 추가** (`"high"` / `"medium"` / `"low"`) 와 `url`: 제안서의 "공식 자료는 높은 신뢰도, 커뮤니티 추측은 낮은 신뢰도" 기록을 위해.
