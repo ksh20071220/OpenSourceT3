@@ -13,9 +13,9 @@
 
 | 담당 | 파일 |
 |---|---|
-| **응가 (곽수호)** | `src/ui.c` |
-| **똥 (오승민)** | `src/api.c`, `src/memory.c` |
-| **변 (손석현)** | `src/persona.c`, `docs/persona-schema.md`, `assets/personas/` |
+| **곽수호** | `src/ui.c` |
+| **오승민** | `src/api.c`, `src/memory.c` |
+| **손석현** | `src/persona.c`, `docs/persona-schema.md`, `assets/personas/` |
 | **공통** (관리: 팀장) | 그 밖의 모든 파일: `include/*.h`, `src/main.c`, `src/common.c`, `src/platform.c`, `src/config.c`, `src/purpose.c`, `lib/`, `assets/providers.json`, `assets/purposes.json`, `Makefile`, `.github/`, `.vscode/`, `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `docs/INTERFACE.md`, `docs/ROADMAP.md`, `docs/SETUP.md`, `.gitignore` 등 |
 
 - `include/` 의 헤더는 **모듈 사이의 약속(규격)** 이라 공통 파일입니다. `api.h`를 똥이 혼자 바꾸면 그걸 부르는 응가·변의 코드가 깨지기 때문입니다.
