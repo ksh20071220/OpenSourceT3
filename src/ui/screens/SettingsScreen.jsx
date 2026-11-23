@@ -1,5 +1,6 @@
 /*
- * SettingsScreen.jsx — 설정: AI 연결, 계정, 데이터, 화면, 정보
+ * SettingsScreen.jsx — 설정: AI 연결, 계정, 데이터, 정보
+ * (밝은/어두운 화면 전환은 메뉴의 해·달 버튼으로 한다)
  * [담당: 곽수호]
  */
 import { useEffect, useState } from 'react'
@@ -25,7 +26,7 @@ function Section({ id, title, children }) {
 }
 
 export function SettingsScreen() {
-  const { config, setConfig, configured, user, cloudEnabled, theme, toggleTheme, refreshData, toast, toastError } = useApp()
+  const { config, setConfig, configured, user, cloudEnabled, refreshData, toast, toastError } = useApp()
   const [editing, setEditing] = useState(!configured)
   const [confirm, setConfirm] = useState(null) // 'local' | 'account'
   const { hash } = useLocation()
@@ -168,21 +169,6 @@ export function SettingsScreen() {
             </button>
           </div>
           <p className="hint mt-3">백업 파일에는 캐릭터와 대화 기록이 들어 있고, API 키는 들어 있지 않아요.</p>
-        </Section>
-
-        <Section id="display" title="화면">
-          <div className="flex items-center justify-between">
-            <span className="text-sm">어두운 화면</span>
-            <button
-              role="switch"
-              aria-checked={theme === 'dark'}
-              onClick={toggleTheme}
-              className={`relative h-7 w-12 rounded-full transition ${theme === 'dark' ? 'bg-brand-500' : 'bg-stone-300'}`}
-            >
-              <span className={`absolute top-1 size-5 rounded-full bg-white shadow transition-all ${theme === 'dark' ? 'left-6' : 'left-1'}`} />
-              <span className="sr-only">어두운 화면</span>
-            </button>
-          </div>
         </Section>
 
         <Section id="about" title="정보">

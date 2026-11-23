@@ -2,16 +2,14 @@
  * ProviderSetup.jsx — AI 연결 설정 (회사 → 키 발급 안내 → 키 입력 → 모델 고르기)
  * [담당: 곽수호]   첫 설정 화면과 설정 화면에서 같이 쓴다.
  */
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { listProviders } from '../../common/providers.js'
 import { isConfigured } from '../../common/config.js'
 import { errorMessage } from '../../common/errors.js'
 import { apiListModels } from '../../api/api.js'
 import { useApp } from '../AppContext.jsx'
 import { Icon } from './Icons.jsx'
-
-// 모델 이름으로 저비용/고성능을 대략 추천 (모델 이름 규칙이 바뀌면 여기만 고치면 됨)
-const LIGHT_HINT = /(mini|nano|flash|haiku|lite|small)/i
+import { chatModelsFor, recommendModels } from '../modelPicker.js'
 
 export function ProviderSetup({ onSaved, submitText = '저장' }) {
   const { config, setConfig, toast } = useApp()
@@ -21,6 +19,7 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
   const [loadingModels, setLoadingModels] = useState(false)
   const [error, setError] = useState('')
   const listId = useId()
+  const loadSeq = useRef(0) // 불러오는 중에 회사를 바꾸면 늦게 온 결과를 버리기 위한 번호
   const providers = listProviders()
   const p = providers.find((x) => x.id === draft.provider)
   const isTest = draft.provider === 'test'
@@ -31,20 +30,25 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
   }
 
   async function loadModels() {
+    const seq = ++loadSeq.current
+    const provider = draft.provider
     setLoadingModels(true)
     setError('')
     try {
-      const list = await apiListModels(draft)
+      const raw = await apiListModels(draft)
+      if (seq !== loadSeq.current) return // 그사이 회사를 바꿨으면 버림
+      const list = chatModelsFor(provider, raw) // 대화용 모델만, 최신 순
       setModels(list)
-      // 비어 있으면 그럴듯한 값을 미리 채워 준다 (사용자가 바꿀 수 있음)
-      const light = list.find((m) => LIGHT_HINT.test(m))
-      const heavy = [...list].reverse().find((m) => !LIGHT_HINT.test(m))
-      setDraft((d) => ({ ...d, modelLight: d.modelLight || light || '', modelHeavy: d.modelHeavy || heavy || '' }))
-      toast(`모델 ${list.length}개를 불러왔어요. 키가 정상이에요.`)
+      // 비어 있거나, 목록에는 있지만 대화용이 아닌 모델(예: 음악 모델)이면 추천값으로 바꾼다.
+      // 목록에 없는 이름은 사용자가 직접 쓴 별칭일 수 있어서 그대로 둔다.
+      const rec = recommendModels(provider, list)
+      const keep = (v) => v && (list.includes(v) || !raw.includes(v))
+      setDraft((d) => ({ ...d, modelLight: keep(d.modelLight) ? d.modelLight : rec.light, modelHeavy: keep(d.modelHeavy) ? d.modelHeavy : rec.heavy }))
+      toast(`대화용 모델 ${list.length}개를 불러왔어요. 키가 정상이에요.`)
     } catch (e) {
-      setError(errorMessage(e))
+      if (seq === loadSeq.current) setError(errorMessage(e))
     } finally {
-      setLoadingModels(false)
+      if (seq === loadSeq.current) setLoadingModels(false)
     }
   }
 
@@ -78,6 +82,8 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
                 className="accent-brand-600"
                 checked={draft.provider === x.id}
                 onChange={() => {
+                  loadSeq.current++ // 불러오던 목록은 버린다
+                  setLoadingModels(false)
                   setModels([])
                   set({ provider: x.id, modelLight: '', modelHeavy: '' })
                 }}
@@ -119,7 +125,11 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
                 autoComplete="off"
                 spellCheck={false}
                 value={draft.apiKey}
-                onChange={(e) => set({ apiKey: e.target.value.trim() })}
+                onChange={(e) => {
+                  loadSeq.current++ // 키를 바꾸면 이전 키로 불러오던 목록은 버린다
+                  setLoadingModels(false)
+                  set({ apiKey: e.target.value.trim() })
+                }}
                 placeholder="붙여 넣기"
               />
               <button type="button" className="btn btn-secondary shrink-0" onClick={() => setShowKey((s) => !s)}>
@@ -146,7 +156,7 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
                 <label className="text-xs font-semibold text-stone-500" htmlFor="m-light">
                   일상 대화용 (저비용)
                 </label>
-                <input id="m-light" className="input mt-1" list={listId} value={draft.modelLight} onChange={(e) => set({ modelLight: e.target.value.trim() })} placeholder="예: 이름에 mini·flash·haiku" />
+                <input id="m-light" className="input mt-1" list={listId} value={draft.modelLight} onChange={(e) => set({ modelLight: e.target.value.trim() })} placeholder="'모델 목록 불러오기'를 누르면 추천값이 채워져요" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-stone-500" htmlFor="m-heavy">
