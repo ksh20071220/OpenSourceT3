@@ -21,8 +21,13 @@ import { getActiveUser } from './storage.js'
 export const MIN_PASSWORD_LENGTH = 8
 const MAX_PASSWORD_LENGTH = 256
 
-/** 테스트에서만 반복 횟수를 줄이기 위한 설정. 앱에서는 바꾸지 않는다 (AGENTS.md: 약하게 바꾸지 않기) */
-export const keyVaultOptions = { iterations: 600_000 }
+/**
+ * 반복 횟수 설정. 테스트에서만 줄인다. 앱에서는 바꾸지 않는다 (AGENTS.md: 약하게 바꾸지 않기)
+ *   iterations    : 저장할 때 쓰는 값
+ *   minIterations / maxIterations : 서버가 알려 준 값이 이 범위를 벗어나면 거절
+ *     (DB가 조작돼 반복 횟수를 1로 바꿔 보내면, 비밀번호를 빨리 알아낼 수 있는 값을 우리가 만들어 보내게 되기 때문)
+ */
+export const keyVaultOptions = { iterations: 600_000, minIterations: 600_000, maxIterations: 5_000_000 }
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -34,7 +39,8 @@ const randomBytes = (n) => crypto.getRandomValues(new Uint8Array(n))
 
 /** 비밀번호 규칙 검사. 틀리면 INVALID_ARG */
 export function checkPassword(password) {
-  const len = Array.from(String(password ?? '')).length
+  // 열쇠를 만들 때와 같은 형태(NFC)로 바꾼 뒤 센다. 한글을 자모로 나눈 형태(NFD)로 붙여 넣으면 글자 수가 부풀려지기 때문
+  const len = Array.from(String(password ?? '').normalize('NFC')).length
   if (len < MIN_PASSWORD_LENGTH) throw new AppError(ErrCode.INVALID_ARG, `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다`)
   if (len > MAX_PASSWORD_LENGTH) throw new AppError(ErrCode.INVALID_ARG, `비밀번호는 ${MAX_PASSWORD_LENGTH}자 이하여야 합니다`)
   if (!String(password).trim()) throw new AppError(ErrCode.INVALID_ARG, '공백만으로 된 비밀번호는 쓸 수 없습니다')
@@ -117,8 +123,12 @@ export async function unlockKeyFromAccount(password) {
   if (!info) throw new AppError(ErrCode.NOT_FOUND, '계정에 저장된 API 키가 없습니다')
   // 잠겨 있으면 느린 열쇠 계산을 하지 않고 바로 알려 준다 (서버도 어차피 거절함)
   if (info.locked_seconds > 0) throw new AppError(ErrCode.LOCKED, '잠김', null, { retryAfter: info.locked_seconds })
+  const iterations = Number(info.iterations)
+  if (!Number.isInteger(iterations) || iterations < keyVaultOptions.minIterations || iterations > keyVaultOptions.maxIterations) {
+    throw new AppError(ErrCode.PARSE, '저장된 키 설정이 올바르지 않습니다. 키를 지우고 다시 저장해 주세요.')
+  }
 
-  const { encKey, auth } = await deriveKeys(password ?? '', fromB64(info.salt), info.iterations)
+  const { encKey, auth } = await deriveKeys(password ?? '', fromB64(info.salt), iterations)
   const r = await rpc('unlock_user_key', { p_auth: auth })
   if (!r?.ok) {
     if (r?.reason === 'wrong') throw new AppError(ErrCode.WRONG_PASSWORD, '비밀번호 틀림', null, { remaining: r.remaining })
@@ -133,7 +143,13 @@ export async function unlockKeyFromAccount(password) {
     // 확인용 값은 맞는데 안 풀리면 저장된 값이 깨졌거나 다른 계정 것 — 다시 저장해야 한다
     throw new AppError(ErrCode.PARSE, '저장된 키를 풀지 못했습니다. 키를 다시 저장해 주세요.', e)
   }
-  return { provider: info.provider, apiKey, modelLight: info.model_light || '', modelHeavy: info.model_heavy || '' }
+  // 회사·모델 이름은 잠긴 값과 같은 순간에 받은 것을 쓴다 (그사이 다른 기기에서 다시 저장했을 수 있음)
+  return {
+    provider: r.provider ?? info.provider,
+    apiKey,
+    modelLight: (r.model_light ?? info.model_light) || '',
+    modelHeavy: (r.model_heavy ?? info.model_heavy) || '',
+  }
 }
 
 /** 비밀번호 바꾸기: 예전 비밀번호로 풀고 새 비밀번호로 다시 잠근다 */

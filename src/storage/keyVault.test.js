@@ -39,7 +39,7 @@ vi.mock('../common/auth.js', async () => {
             if (args.p_auth === row.p_auth) {
               row.failed = 0
               row.locked_until = null
-              return ok({ ok: true, ciphertext: row.p_ciphertext, iv: row.p_iv })
+              return ok({ ok: true, ciphertext: row.p_ciphertext, iv: row.p_iv, provider: row.p_provider, model_light: row.p_model_light, model_heavy: row.p_model_heavy })
             }
             if (row.failed + 1 >= 5) {
               row.failed = 0
@@ -79,6 +79,7 @@ beforeEach(() => {
   server.calls.length = 0
   server.now = 0
   keyVaultOptions.iterations = 2000 // 테스트 속도를 위해서만 줄임 (앱 기본값은 아래에서 확인)
+  keyVaultOptions.minIterations = 1000
   setActiveUser('user-1')
 })
 
@@ -86,6 +87,7 @@ describe('저장', () => {
   it('앱 기본 반복 횟수는 60만 번, 최소 길이 8자', async () => {
     const mod = await import('./keyVault.js?fresh')
     expect(mod.keyVaultOptions.iterations).toBe(600_000)
+    expect(mod.keyVaultOptions.minIterations).toBe(600_000)
     expect(MIN_PASSWORD_LENGTH).toBe(8)
   })
 
@@ -148,6 +150,40 @@ describe('불러오기', () => {
     server.rows.set('user-2', { ...server.rows.get('user-1') })
     setActiveUser('user-2')
     await expect(unlockKeyFromAccount(PW)).rejects.toMatchObject({ code: 'PARSE' })
+  })
+
+  it('서버가 알려 준 반복 횟수가 너무 작거나 크면 비밀번호 확인 값을 보내지 않는다', async () => {
+    await saveKeyToAccount(CFG, PW)
+    for (const bad of [1, 999, 10_000_000]) {
+      server.rows.get('user-1').p_iterations = bad
+      server.calls.length = 0
+      await expect(unlockKeyFromAccount(PW)).rejects.toMatchObject({ code: 'PARSE' })
+      expect(server.calls.map((c) => c.name)).not.toContain('unlock_user_key')
+    }
+  })
+
+  it('불러올 때 회사·모델 이름은 잠긴 값과 같은 순간의 것', async () => {
+    await saveKeyToAccount(CFG, PW)
+    const realRpc = (await import('../common/auth.js')).supabase.rpc
+    const auth = await import('../common/auth.js')
+    auth.supabase.rpc = async (name, args) => {
+      const res = await realRpc(name, args)
+      if (name === 'get_user_key_info') res.data.model_light = 'stale-model' // 오래된 정보라고 가정
+      return res
+    }
+    try {
+      expect((await unlockKeyFromAccount(PW)).modelLight).toBe('gemini-3.5-flash-lite')
+    } finally {
+      auth.supabase.rpc = realRpc
+    }
+  })
+
+  it('한글을 자모로 나눈 형태(NFD)로 붙여 넣어도 글자 수는 합친 형태로 센다', async () => {
+    const nfd = '한글비번'.normalize('NFD') // 4글자지만 자모로는 10개 이상
+    expect(Array.from(nfd).length).toBeGreaterThanOrEqual(8)
+    await expect(saveKeyToAccount(CFG, nfd)).rejects.toMatchObject({ code: 'INVALID_ARG' })
+    await saveKeyToAccount(CFG, '한글비밀번호입니다'.normalize('NFD'))
+    expect((await unlockKeyFromAccount('한글비밀번호입니다')).apiKey).toBe(KEY) // 합친 형태로 입력해도 풀림
   })
 
   it('한글·이모지 비밀번호도 된다', async () => {
