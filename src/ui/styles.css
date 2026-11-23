@@ -1,0 +1,98 @@
+/*
+ * styles.css — 전체 디자인 (Tailwind CSS v4)
+ * [담당: 곽수호]
+ *
+ * 색을 바꾸고 싶으면 아래 @theme 의 --color-brand-* 만 바꾸면 버튼·강조색이 한꺼번에 바뀐다.
+ * 버튼은 class="btn btn-primary" 처럼 btn 과 종류(btn-primary / btn-secondary / btn-ghost / btn-danger)를 같이 쓴다.
+ * 어두운 테마는 <html class="dark"> 일 때 dark: 로 시작하는 클래스가 적용된다.
+ */
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Malgun Gothic', system-ui, sans-serif;
+  --color-brand-50: oklch(0.97 0.02 175);
+  --color-brand-100: oklch(0.94 0.05 175);
+  --color-brand-200: oklch(0.88 0.09 175);
+  --color-brand-300: oklch(0.81 0.12 175);
+  --color-brand-400: oklch(0.74 0.14 175);
+  --color-brand-500: oklch(0.67 0.14 175);
+  --color-brand-600: oklch(0.57 0.12 176);
+  --color-brand-700: oklch(0.48 0.1 177);
+  --color-brand-800: oklch(0.39 0.08 178);
+  --color-brand-900: oklch(0.32 0.06 179);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:text-stone-950 dark:hover:bg-brand-400;
+  }
+  .btn-secondary {
+    @apply border border-stone-200 bg-white text-stone-800 hover:bg-stone-100
+      dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800;
+  }
+  .btn-ghost {
+    @apply text-stone-600 hover:bg-stone-200/60 dark:text-stone-300 dark:hover:bg-stone-800;
+  }
+  .btn-danger {
+    @apply border border-red-200 bg-white text-red-600 hover:bg-red-50
+      dark:border-red-900 dark:bg-stone-900 dark:text-red-400 dark:hover:bg-red-950;
+  }
+  .icon-btn {
+    @apply inline-flex size-10 items-center justify-center rounded-full text-stone-600 transition hover:bg-stone-200/70
+      dark:text-stone-300 dark:hover:bg-stone-800;
+  }
+  .card {
+    @apply rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900;
+  }
+  .input {
+    @apply w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-stone-400
+      focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20
+      dark:border-stone-700 dark:bg-stone-900 dark:placeholder:text-stone-500;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-semibold text-stone-700 dark:text-stone-300;
+  }
+  .hint {
+    @apply mt-1 text-xs text-stone-500 dark:text-stone-400;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-700
+      dark:bg-stone-800 dark:text-stone-300;
+  }
+  .section-title {
+    @apply text-lg font-bold tracking-tight;
+  }
+}
+
+/* 대화 중 "입력 중…" 점 세 개 */
+@keyframes ost3-blink {
+  0%, 80%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
+}
+.typing-dot {
+  animation: ost3-blink 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }

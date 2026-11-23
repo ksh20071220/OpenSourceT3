@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="이름만 넣으면 AI가 캐릭터의 인격을 찾아 만들어 주는 오픈소스 캐릭터 채팅 (내 API 키 사용)" />
+    <meta name="theme-color" content="#0d9488" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>OpenSourceT3 — 캐릭터 채팅</title>
+    <script>
+      // 화면이 그려지기 전에 테마를 적용해서 깜빡임을 막는다 (ui/AppContext.jsx 와 같은 저장 키)
+      try {
+        var t = localStorage.getItem('ost3.theme')
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

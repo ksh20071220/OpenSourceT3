@@ -1,0 +1,41 @@
+# [공통 파일] PR마다 자동 검사: 테스트 + 빌드 (Linux, Windows)
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  common-files:
+    # 공통 파일이 바뀐 PR이면 "팀원 3명 확인" 규칙을 알려 준다 (실패시키지는 않음)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 공통 파일 변경 확인
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          COMMON=$(echo "$CHANGED" | grep -vE '^src/(ui|api|memory|storage|persona)/|^src/assets/personas/|^docs/persona-schema.md$' || true)
+          if [ -n "$COMMON" ]; then
+            echo "::warning::공통 파일이 바뀌었습니다. CONTRIBUTING.md 4장: 나머지 두 명 모두 승인한 뒤에 합치세요."
+            echo "$COMMON"
+          fi

@@ -1,64 +1,73 @@
 # OpenSourceT3
 
-**저비용 고성능 LLM 기반 커스텀 캐릭터 채팅 프로그램** (1반 3팀)
+**저비용 고성능 LLM 기반 커스텀 캐릭터 채팅 웹앱** (1반 3팀)
 
 캐릭터 이름만 입력하면 웹 검색과 LLM으로 캐릭터의 성격·가치관·말투·행동 원칙을 조사해 **근거 기반 페르소나(JSON)** 를 만들고,
-사용자 본인의 API 키로 연결한 LLM에 입혀 대화·학습·상담·실무에 쓸 수 있게 하는 **비영리 오픈소스 프로그램**입니다.
+사용자 본인의 API 키로 연결한 LLM에 입혀 대화·학습·상담·실무에 쓸 수 있게 하는 **비영리 오픈소스 웹앱**입니다.
 복잡한 프롬프트 없이 **단어와 클릭만으로** 범용 AI에 캐릭터와 사용 목적을 입히는 것이 목표입니다.
 
 ## 주요 특징
 
-- **근거 기반 인격 추론**: 수집한 설정·대사·행적의 신뢰도를 평가하고, 자료에 없는 특성은 맥락으로 추론
-- **로컬 우선**: 페르소나·대화 기록·API 키는 모두 사용자 컴퓨터에만 저장, 중앙 서버 없음
-- **BYOK (내 API 키 사용)**: OpenAI, Google Gemini, Anthropic Claude 지원 (OpenAI 호환 형식)
-- **모델 라우팅**: 인격 생성·복잡한 작업은 고성능 모델, 일상 대화는 저비용 모델
-- **사용 목적 선택**: 학습·실무·상담·대화 등 26가지 + 직접 입력
-- **Windows / Linux** 모두에서 빌드·실행
+- **근거 기반 인격 추론**: 웹 검색으로 모은 설정·대사·행적에 신뢰도를 매기고, 자료에 없는 특성은 맥락으로 추론
+- **캐릭터 만들기 4가지**: 검색으로 / 설정 글로(AI 정리) / 양식에 직접 입력 / JSON 파일 가져오기 + 언제든 수정
+- **BYOK (내 API 키)**: OpenAI, Google Gemini, Anthropic Claude. 브라우저가 AI 회사에 **직접** 요청하고 우리 서버는 없음
+- **모델 라우팅**: 캐릭터 생성·어려운 작업은 고성능 모델, 일상 대화는 저비용 모델
+- **사용 목적 선택**: 학습·실무·상담·대화 26가지 + 직접 입력. 상담 목적에는 위기 상담 안내 표시
+- **로컬 우선 + 선택 로그인**: 기본은 브라우저에만 저장. 구글로 로그인하면 계정에 동기화돼 다른 기기에서도 이어서 사용
+- **인격 일관성 검증용 비교 모드**: 페르소나 없이 이름만 넣는 단순 프롬프트 방식과 비교 (제안서의 OOC 검증)
+- **테스트 모드**: API 키 없이 더미 답변으로 화면·흐름 확인 (개발·발표 시연용)
+- 밝은/어두운 화면, 휴대폰·컴퓨터 화면 모두 지원
 
-## 현재 상태: v0.1 뼈대
+## 구조
 
-공통 파일은 완성돼 있고, 각자 맡은 파일은 **더미(깡통) 구현**입니다.
-더미 상태로도 `캐릭터 선택 → 목적 선택 → 대화` 흐름이 끝까지 돌아가므로, 각자 자기 파일만 실제 구현으로 바꿔 나가면 됩니다.
-남은 일은 [docs/ROADMAP.md](docs/ROADMAP.md)를 보세요.
+```
+          ┌─▶ OpenAI / Gemini / Claude   ← 사용자 키로 브라우저에서 직접 호출
+브라우저 ─┤
+(React)   └─▶ Supabase (구글 로그인 + DB) ← 로그인한 경우만
+ └ IndexedDB (브라우저 저장소)            ← 항상
+```
+
+Vercel에는 화면 파일만 올라갑니다. 백엔드 코드는 없습니다.
 
 ## 빠른 시작
 
-자세한 설치 방법은 **[docs/SETUP.md](docs/SETUP.md)** 를 보세요.
+필요한 것: **Node.js 22 이상**, git. 자세한 설치·배포 방법은 **[docs/SETUP.md](docs/SETUP.md)**.
 
 ```bash
-# Windows: "MSYS2 UCRT64" 터미널 / Linux: 일반 터미널
-make            # 빌드
-make run        # 실행
-make check      # PR 올리기 전 확인 (경고 없는 빌드 + 자체 테스트)
+npm install       # 처음 한 번
+npm run dev       # 개발 서버 → http://localhost:5173
+npm run check     # PR 올리기 전 확인 (테스트 + 빌드)
 ```
 
-VSCode에서는 `Ctrl+Shift+B` 로 빌드할 수 있습니다.
+처음 열면 "AI 연결하기"에서 **테스트 모드**를 고르면 키 없이 바로 둘러볼 수 있습니다.
 
 ## 폴더 구조
 
 ```
-include/        모듈 간 규격(헤더)                          [공통]
 src/
-  main.c, common.c, platform.c, config.c, purpose.c        [공통]
-  ui.c                                                      [곽수호]
-  api.c, memory.c                                           [오승민]
-  persona.c                                                 [손석현]
-lib/cjson/      JSON 라이브러리 (cJSON, MIT)                 [공통]
-assets/
-  providers.json  API 회사 목록·키 발급 안내               [공통]
-  purposes.json   사용 목적 목록                           [공통]
-  personas/       샘플 페르소나 (자체 창작만)              [손석현]
-data/           사용자 데이터: 설정·API 키·페르소나·대화 기록 (git 제외)
-docs/           제안서와 개발 문서
+  main.jsx               앱 시작점                                [공통]
+  common/                설정, 사용 목적, AI 회사 목록, 오류, 로그인 [공통]
+  assets/                providers.json, purposes.json            [공통]
+  assets/personas/       샘플 페르소나 (자체 창작만)               [손석현]
+  ui/                    화면·컴포넌트·디자인                       [곽수호]
+  api/                   AI 호출, 스트리밍, 웹 검색, 모델 목록       [오승민]
+  memory/                대화 기록·기억                             [오승민]
+  storage/               브라우저 저장 + 계정 동기화                 [오승민]
+  persona/               형식 검사, 설명문 조립, AI 생성             [손석현]
+  test/                  테스트 공통 준비                           [공통]
+supabase/schema.sql      로그인용 DB 표와 접근 규칙(RLS)             [공통]
+docs/                    제안서와 개발 문서
 ```
+
+각 폴더의 `*.test.js(x)` 는 그 폴더 담당자의 테스트입니다.
 
 ## 팀과 역할
 
-| 역할 | 이름 | 담당 | 파일 |
+| 역할 | 이름 | 담당 | 폴더 |
 |---|---|---|---|
-| 팀장, UI | 곽수호 | 채팅 인터페이스, 캐릭터 선택, 목적 선택·학습 모드 UI, 일정·통합 관리 | `src/ui.c` + 공통 파일 관리 |
-| API 엔진 | 오승민 | LLM API 연결, 검색, 프롬프트 구성, 대화 기록·기억 | `src/api.c`, `src/memory.c` |
-| 페르소나 | 손석현 | 캐릭터 정보 분석, 인격 추론, JSON 생성·검증·불러오기 | `src/persona.c`, `docs/persona-schema.md` |
+| 팀장, UI | 곽수호 | 모든 화면, 캐릭터 양식, 디자인, 일정·통합 관리 | `src/ui/` + 공통 파일 관리 |
+| API 엔진 | 오승민 | LLM API 연결, 스트리밍, 웹 검색, 대화 기록·기억, 저장·동기화 | `src/api/`, `src/memory/`, `src/storage/` |
+| 페르소나 | 손석현 | 캐릭터 정보 분석, 인격 추론, JSON 생성·검증, 설명문 조립 | `src/persona/`, `docs/persona-schema.md`, `src/assets/personas/` |
 
 ## 문서
 
@@ -66,19 +75,28 @@ docs/           제안서와 개발 문서
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | **협업 규칙**, Git 작업 순서 (처음이라면 꼭 읽기) |
 | [AGENTS.md](AGENTS.md) | Codex·Claude 같은 AI 코딩 도구가 지켜야 할 규칙 |
-| [docs/SETUP.md](docs/SETUP.md) | Windows / Linux 개발 환경 설치 |
-| [docs/INTERFACE.md](docs/INTERFACE.md) | 모듈 간 규격과 호출 흐름 |
+| [docs/SETUP.md](docs/SETUP.md) | 개발 환경, 로그인(Supabase·Google) 설정, Vercel 배포 |
+| [docs/INTERFACE.md](docs/INTERFACE.md) | 모듈 간 규격(공개 함수)과 호출 흐름 |
 | [docs/persona-schema.md](docs/persona-schema.md) | 페르소나 JSON 형식 |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | 할 일과 제안서 항목별 담당 |
 | docs/저비용_고성능_…_제안(…).docx | 개별 제안서 |
 
+## 제안서에서 바뀐 점
+
+| 제안서 | 지금 | 이유 |
+|---|---|---|
+| C + libcurl + pthread 콘솔 프로그램 | React 웹앱 (JS) | 배포(링크 하나로 사용)와 화면 구성의 자유도. 팀 합의로 변경 |
+| 중앙 서버 없음 | 로그인 안 하면 서버 없음. 로그인(선택)하면 Supabase에 캐릭터·대화 저장 | 여러 기기에서 이어 쓰기. API 키는 여전히 계정에 올리지 않음 |
+
+BYOK, 저비용/고성능 모델 분리, 검색 → 근거 평가 → 인격 추론 → JSON, 사용 목적, OOC 비교 검증, GPL v3는 그대로입니다.
+
 ## 사용 시 주의
 
-- API 키는 `data/config.json` 에 저장됩니다. 이 폴더는 git에 올라가지 않으며, 다른 사람과 공유하지 마세요.
-- 본인 API 키로 사용하는 만큼 각 회사의 이용 정책이 적용되고, 위반 시 키가 정지될 수 있습니다.
+- API 키는 브라우저(localStorage 또는 sessionStorage)에만 저장됩니다. 공용 컴퓨터에서는 "키 기억하기"를 끄세요.
+- 본인 API 키로 사용하는 만큼 각 회사의 이용 정책과 요금이 적용됩니다. 캐릭터 생성은 웹 검색 요금이 추가로 듭니다.
+- 작품 속 캐릭터는 개인적인 대화 용도로만 쓰고, 만든 페르소나를 공개 배포하지 마세요.
 - AI 캐릭터와의 대화는 전문 상담을 대신하지 않습니다.
 
 ## 라이선스
 
-현재 저장소의 LICENSE는 MIT입니다. 제안서에 따라 **GPL v3로 변경할 예정**입니다(팀장 결정 후 반영).
-포함된 cJSON은 MIT 라이선스이며 GPL v3와 함께 쓸 수 있습니다 (`lib/cjson/LICENSE`).
+[GPL v3](LICENSE). 사용한 라이브러리(React, React Router, Vite, Tailwind CSS, Supabase JS 등)는 MIT·Apache-2.0 라이선스로 GPL v3와 함께 쓸 수 있습니다.

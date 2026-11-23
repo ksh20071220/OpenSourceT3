@@ -1,0 +1,15 @@
+# 의존성·빌드 결과
+node_modules/
+dist/
+coverage/
+
+# 비밀 값 (.env.example 만 올린다)
+.env
+.env.*
+!.env.example
+
+# 편집기·OS
+.DS_Store
+Thumbs.db
+*.log
+.vercel
