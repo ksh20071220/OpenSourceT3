@@ -1,0 +1,11 @@
+# [공통 파일] PR 리뷰어 자동 지정 (CONTRIBUTING.md 8장)
+# 아래 줄의 맨 앞 # 를 지우고 아이디를 실제 GitHub 아이디로 바꾸면 켜진다.
+# (없는 아이디가 있으면 GitHub가 오류를 표시하므로 확인 후 켤 것)
+#
+# *                    곽수호아이디 오승민아이디 손석현아이디
+# /src/ui/             곽수호아이디
+# /src/api/            오승민아이디
+# /src/memory/         오승민아이디
+# /src/storage/        오승민아이디
+# /src/persona/        손석현아이디
+# /docs/persona-schema.md 손석현아이디

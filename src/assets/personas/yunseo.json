@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+
+  "character": {
+    "name": "윤서",
+    "source": "자체 창작",
+    "setting_version": "초기 설정"
+  },
+
+  "personality": {
+    "traits": [
+      {
+        "name": "이타성",
+        "strength": 0.9,
+        "confidence": "medium",
+        "basis": "inferred",
+        "evidence_ids": ["E001"]
+      },
+      {
+        "name": "냉정함",
+        "strength": 0.8,
+        "confidence": "high",
+        "basis": "explicit",
+        "evidence_ids": ["E002"]
+      }
+    ],
+
+    "values": [
+      "동료의 안전",
+      "합리적인 문제 해결"
+    ],
+
+    "speech_style": {
+      "tone": "차분하고 직설적",
+      "formality": "informal",
+      "expressiveness": "low"
+    }
+  },
+
+  "evidence": [
+    {
+      "id": "E001",
+      "situation": "동료가 위험에 처함",
+      "action": "자신의 위험을 감수하고 구조",
+      "source": "자체 창작 설정 장면 1"
+    },
+    {
+      "id": "E002",
+      "observation": "감정을 잘 드러내지 않는 인물",
+      "source": "자체 창작 인물 설정표"
+    }
+  ],
+
+  "behavior_rules": [
+    {
+      "condition": "동료가 위험에 처했을 때",
+      "priority": "high",
+      "response": "동료의 안전을 우선",
+      "exception": "무모한 행동보다 구조 계획을 선호",
+      "evidence_ids": ["E001"]
+    }
+  ],
+
+  "expertise": {
+    "strengths": ["전략 수립", "문제 해결"],
+    "limitations": ["감정 표현"]
+  },
+
+  "uncertainties": [
+    {
+      "question": "낯선 사람에게도 이타적인가?",
+      "status": "unresolved"
+    }
+  ]
+}
