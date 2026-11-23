@@ -13,14 +13,15 @@
 
 | 담당 | 파일 |
 |---|---|
-| **곽수호** | `src/ui.c` |
-| **오승민** | `src/api.c`, `src/memory.c` |
-| **손석현** | `src/persona.c`, `docs/persona-schema.md`, `assets/personas/` |
-| **공통** (관리: 팀장) | 그 밖의 모든 파일: `include/*.h`, `src/main.c`, `src/common.c`, `src/platform.c`, `src/config.c`, `src/purpose.c`, `lib/`, `assets/providers.json`, `assets/purposes.json`, `Makefile`, `.github/`, `.vscode/`, `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `docs/INTERFACE.md`, `docs/ROADMAP.md`, `docs/SETUP.md`, `.gitignore` 등 |
+| **곽수호** | `src/ui/` 전체 (화면, 컴포넌트, `styles.css`, `ui.test.jsx`) |
+| **오승민** | `src/api/`, `src/memory/`, `src/storage/` |
+| **손석현** | `src/persona/`, `docs/persona-schema.md`, `src/assets/personas/` |
+| **공통** (관리: 팀장) | 그 밖의 모든 파일: `src/common/`, `src/main.jsx`, `src/test/`, `src/assets/providers.json`, `src/assets/purposes.json`, `supabase/`, `index.html`, `package.json`, `package-lock.json`, `vite.config.js`, `vercel.json`, `.github/`, `.vscode/`, `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `docs/INTERFACE.md`, `docs/ROADMAP.md`, `docs/SETUP.md`, `.gitignore`, `.env.example` 등 |
 
-- `include/` 의 헤더는 **모듈 사이의 약속(규격)** 이라 공통 파일입니다. `api.h`를 똥이 혼자 바꾸면 그걸 부르는 응가·변의 코드가 깨지기 때문입니다.
-- 다른 사람 모듈의 기능이 필요하면 **헤더에 있는 함수만** 부릅니다. 상대의 `.c` 파일을 열어 고치지 않습니다.
-- 상대 기능이 아직 더미여도 괜찮습니다. 더미가 정해진 모양대로 결과를 돌려주므로 내 쪽 개발을 계속할 수 있습니다.
+- `docs/INTERFACE.md` 에 적힌 **공개 함수가 모듈 사이의 약속(규격)** 입니다. 이름·인자·반환값을 혼자 바꾸면 그걸 부르는 다른 사람 코드가 깨집니다.
+- 다른 사람 모듈의 기능이 필요하면 **INTERFACE.md 에 있는 공개 함수만** 부릅니다. 상대 폴더의 파일을 열어 고치지 않습니다.
+- 상대 기능이 아직 부족해도 괜찮습니다. 공개 함수가 정해진 모양대로 결과를 돌려주므로 내 쪽 개발을 계속할 수 있습니다.
+- 라이브러리를 새로 설치하면 `package.json` 이 바뀌므로 **공통 PR**입니다.
 
 ## 3. 작업 순서 (Git 처음 쓰는 사람용)
 
@@ -31,7 +32,8 @@ git clone https://github.com/ksh20071220/OpenSourceT3.git
 cd OpenSourceT3
 git config user.name "내 이름"
 git config user.email "GitHub에 등록한 이메일"
-make check          # 빌드와 자체 테스트가 통과하는지 확인
+npm install        # 라이브러리 설치
+npm run check      # 테스트와 빌드가 통과하는지 확인
 ```
 
 ### 작업할 때마다
@@ -44,11 +46,11 @@ git pull
 # 2) 작업용 브랜치 만들기 (이름 규칙은 5장)
 git switch -c ui/purpose-menu
 
-# 3) 내 파일 수정 → 빌드·확인
-make check
+# 3) 내 파일 수정 → 확인 (npm run dev 로 화면을 보면서 고치고, 마지막에 check)
+npm run check
 
 # 4) 저장(커밋)
-git add src/ui.c
+git add src/ui/
 git commit -m "[ui] 목적 선택 화면을 분류별로 나눔"
 
 # 5) GitHub에 올리기
@@ -72,12 +74,12 @@ git merge main          # 충돌이 나면 표시된 부분을 고치고 git add
 
 ## 4. 공통 파일을 바꿔야 할 때
 
-개발하다 보면 헤더에 함수를 추가하거나 구조체에 필드를 넣어야 할 때가 반드시 생깁니다. 그때는:
+개발하다 보면 공개 함수를 추가하거나 기록에 필드를 넣어야 할 때가 반드시 생깁니다. 그때는:
 
 1. **공통 파일만 바꾸는 PR을 따로** 만듭니다. (내 모듈 작업과 섞지 않기)
 2. PR 제목 앞에 `[공통]` 을 붙이고, **왜 바꾸는지, 누구 코드에 영향이 있는지** 적습니다.
-3. 헤더를 바꿨다면 그 함수를 쓰는 **다른 사람 파일이 깨지지 않게 더미까지 맞춰서** 빌드가 통과해야 합니다.
-   (이 경우에만 예외적으로 다른 사람의 더미 부분을 최소한으로 고칠 수 있고, PR에 그 사실을 적습니다.)
+3. 규격(INTERFACE.md)을 바꿨다면 그 함수를 쓰는 **다른 사람 파일이 깨지지 않게** 맞춰서 `npm run check` 가 통과해야 합니다.
+   (이 경우에만 예외적으로 다른 사람 파일의 호출 부분을 최소한으로 고칠 수 있고, PR에 그 사실을 적습니다.)
 4. **나머지 두 명 모두 승인**한 뒤에 합칩니다.
 
 PR에 공통 파일이 포함되면 자동 검사가 경고를 띄워 알려 줍니다.
@@ -89,39 +91,39 @@ PR에 공통 파일이 포함되면 자동 검사가 경고를 띄워 알려 줍
 | 영역 | 예시 |
 |---|---|
 | `ui/` | `ui/purpose-menu` |
-| `api/` | `api/curl-request`, `api/streaming` |
-| `memory/` | `memory/file-save` |
+| `api/` | `api/claude-streaming`, `api/post-process` |
+| `memory/` | `memory/summary` |
+| `storage/` | `storage/tombstone` |
 | `persona/` | `persona/build-prompt` |
-| `common/` | `common/add-chat-cancel` |
+| `common/` | `common/add-purpose` |
 | `docs/` | `docs/setup-mac` |
 
 **커밋 메시지**: `[영역] 무엇을 했는지` (한국어 OK)
 
 ```
-[api] OpenAI 호환 요청 보내기 구현
+[api] Claude 검색 pause_turn 이어 받기
 [persona] 행동 규칙을 입력과 관련된 것만 고르도록 변경
-[공통] api.h에 대화 취소 함수 추가
+[공통] INTERFACE에 메시지 삭제 함수 추가
 ```
 
 ## 6. PR 규칙
 
 - **작게 자주** 올립니다. 기능 하나 = PR 하나.
-- 올리기 전에 `make check` 가 통과해야 합니다.
+- 올리기 전에 `npm run check` 가 통과해야 합니다.
 - PR 양식의 체크리스트를 채웁니다.
 - 리뷰어는 "됐다/안 됐다"만이 아니라 **이해 안 되는 부분을 질문**합니다. 셋 다 처음이니 질문이 곧 리뷰입니다.
 
 ## 7. 코드 규칙
 
-- **C11 표준**, 들여쓰기 **공백 4칸**, 파일 인코딩 **UTF-8**, 줄바꿈 **LF** (설정 파일이 자동 처리)
-- 공개 함수 이름은 모듈 이름으로 시작: `api_`, `memory_`, `persona_`, `ui_`, `platform_`, `config_`, `purpose_`
-- 모듈 안에서만 쓰는 함수·변수는 `static`
-- 모든 공개 함수는 `ErrCode` 를 반환하고, 결과는 마지막 인자로 돌려줌 (`include/common.h` 규칙)
-- 결과를 돌려주는 함수가 메모리를 할당하고, 받은 쪽이 해제
-- **운영체제별 코드 금지**: 각자 파일에서 `<windows.h>`, `<unistd.h>`, `<dirent.h>` 를 쓰지 않고 `platform.h` 함수를 씀
-  - 파일 열기 `fopen` → `platform_fopen`, `strdup` → `ost3_strdup`, 경로 구분자는 항상 `/`
+- **JavaScript (ES 모듈) + React**, 들여쓰기 **공백 2칸**, 파일 인코딩 **UTF-8**, 줄바꿈 **LF** (설정 파일이 자동 처리)
+- 파일 맨 위 주석에 **담당자**를 적습니다: `[담당: 이름]` 또는 `[공통 파일]`
+- 다른 모듈에 공개하는 함수는 `export`, 모듈 안에서만 쓰는 것은 `export` 하지 않음
+- 실패는 `AppError(ErrCode.xxx, '설명')` 로 던지고, 화면은 `errorMessage(err)` 로 보여 줌 (`src/common/errors.js`)
+- 화면의 스타일은 Tailwind 클래스로. 자주 쓰는 모양(`btn`, `card`, `input` …)은 `src/ui/styles.css` 에 있음
 - 주석은 한국어로 자유롭게. 아직 안 한 일은 `TODO(이름):` 으로 표시
-- API 키·개인 데이터는 절대 코드나 커밋에 넣지 않음 (`data/` 는 git 제외)
-- `assets/personas/` 에는 **자체 창작 캐릭터만** 넣음 (저작권)
+- 기능을 고치면 그 폴더의 `*.test.js` 에 테스트를 하나 이상 추가 (**API 키 없이** 테스트 모드나 가짜 fetch로 돌아가야 함)
+- API 키·`.env`·개인 데이터는 절대 코드나 커밋에 넣지 않음
+- `src/assets/personas/` 에는 **자체 창작 캐릭터만** 넣음 (저작권)
 
 ## 8. 팀장이 GitHub에서 한 번 해 둘 설정
 
