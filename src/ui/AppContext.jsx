@@ -124,8 +124,9 @@ export function AppProvider({ children }) {
       refreshData,
       toast,
       toastError,
+      migrateOpen: migrateAsk, // "계정으로 옮길까요?" 창이 떠 있는지 (다른 팝업이 겹치지 않게)
     }),
-    [config, setConfig, theme, toggleTheme, user, ready, dataVersion, refreshData, toast, toastError],
+    [config, setConfig, theme, toggleTheme, user, ready, dataVersion, refreshData, toast, toastError, migrateAsk],
   )
 
   return (

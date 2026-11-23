@@ -10,9 +10,12 @@ import { apiListModels } from '../../api/api.js'
 import { useApp } from '../AppContext.jsx'
 import { Icon } from './Icons.jsx'
 import { chatModelsFor, recommendModels } from '../modelPicker.js'
+import { useKeyVault } from '../KeyVaultContext.jsx'
 
 export function ProviderSetup({ onSaved, submitText = '저장' }) {
-  const { config, setConfig, toast } = useApp()
+  const { config, setConfig, toast, user } = useApp()
+  const keyVault = useKeyVault()
+  const [saveToAccount, setSaveToAccount] = useState(true) // 로그인했을 때만 보이는 "계정에도 저장"
   const [draft, setDraft] = useState(() => ({ ...config, provider: config.provider || '' }))
   const [showKey, setShowKey] = useState(false)
   const [models, setModels] = useState([])
@@ -61,6 +64,8 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
     }
     setConfig(next)
     toast('AI 연결을 저장했어요.')
+    // 로그인했고 실제 키면: 비밀번호를 정해서 계정에도 저장 (창은 화면이 바뀌어도 유지됨)
+    if (user && !isTest && saveToAccount) keyVault.openSave(next)
     onSaved?.()
   }
 
@@ -140,7 +145,18 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
               <input type="checkbox" className="accent-brand-600" checked={draft.rememberKey} onChange={(e) => set({ rememberKey: e.target.checked })} />
               이 브라우저에 키 기억하기 (끄면 탭을 닫을 때 지워져요)
             </label>
-            <p className="hint">키는 이 브라우저에만 저장되고, 로그인해도 계정에 올라가지 않아요.</p>
+            {user ? (
+              <label className="mt-2 flex items-start gap-2 text-sm text-stone-600 dark:text-stone-400">
+                <input type="checkbox" className="mt-0.5 accent-brand-600" checked={saveToAccount} onChange={(e) => setSaveToAccount(e.target.checked)} />
+                <span>
+                  계정에도 저장 (API 키 비밀번호로 잠금)
+                  <span className="hint block">저장을 누르면 비밀번호를 정해요. 다른 기기에서는 로그인 후 이 비밀번호만 입력하면 돼요.</span>
+                </span>
+              </label>
+            ) : (
+              <p className="hint">키는 이 브라우저에만 저장돼요. 로그인하면 비밀번호로 잠가 계정에도 저장할 수 있어요.</p>
+            )}
+            <p className="hint">AI 회사 사이트에서 월 사용 한도(예산)를 꼭 설정해 두세요.</p>
           </div>
 
           <div>
