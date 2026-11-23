@@ -141,7 +141,11 @@ export function KeyVaultProvider({ children }) {
     () => ({
       info,
       refreshInfo,
-      openLoad: () => setModal({ kind: 'load' }),
+      // 열기 직전에 정보를 새로 받아 잠금 남은 시간이 정확하게 (로그인 때 받은 값은 낡았을 수 있음)
+      openLoad: async () => {
+        await refreshInfo()
+        setModal({ kind: 'load' })
+      },
       openSave: (cfg) => setModal({ kind: 'save', cfg }),
       openChange: () => setModal({ kind: 'change' }),
       removeFromAccount: async () => {

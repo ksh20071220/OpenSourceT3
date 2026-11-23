@@ -231,6 +231,17 @@ describe('설정 → 계정', () => {
     expect(screen.queryByText(/계정에 저장된 키를 이 키로 바꿀까요/)).toBeNull()
   })
 
+  it('설정에서 불러오기를 열면 잠금 정보를 새로 받는다 (낡은 남은 시간 안 보임)', async () => {
+    vault.info = { provider: 'gemini', modelLight: '', modelHeavy: '', updatedAt: 0, lockedSeconds: 20 }
+    renderAt('/settings')
+    await screen.findByText(/계정에 저장된 API 키/)
+    vault.info = { ...vault.info, lockedSeconds: 0 } // 그사이 잠금이 풀림
+    fireEvent.click(screen.getByText('불러오기'))
+    await screen.findByText('저장된 API 키를 불러오시겠습니까?')
+    expect(screen.queryByText(/초 뒤에 다시/)).toBeNull()
+    expect(screen.getAllByText('불러오기').at(-1).closest('button').disabled).toBe(false)
+  })
+
   it('비밀번호 바꾸기', async () => {
     vault.info = { provider: 'gemini', modelLight: '', modelHeavy: '', updatedAt: 0, lockedSeconds: 0 }
     renderAt('/settings')
