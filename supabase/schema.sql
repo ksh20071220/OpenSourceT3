@@ -96,8 +96,12 @@ begin
   if auth.uid() is null then
     raise exception 'login required';
   end if;
+  -- 빈 값, 약한 반복 횟수(AGENTS.md: 60만 번 미만 금지), 터무니없이 큰 값은 거절
   if coalesce(p_ciphertext, '') = '' or coalesce(p_iv, '') = '' or coalesce(p_salt, '') = ''
-     or coalesce(p_auth, '') = '' or coalesce(p_provider, '') = '' or p_iterations < 100000 then
+     or coalesce(p_auth, '') = '' or coalesce(p_provider, '') = ''
+     or p_iterations is null or p_iterations < 600000 or p_iterations > 5000000
+     or length(p_ciphertext) > 4096 or length(p_iv) > 64 or length(p_salt) > 64 or length(p_auth) > 256
+     or length(p_provider) > 64 or length(coalesce(p_model_light, '')) > 200 or length(coalesce(p_model_heavy, '')) > 200 then
     raise exception 'invalid arguments';
   end if;
   insert into public.user_keys as k
@@ -127,7 +131,8 @@ $$;
 
 -- 비밀번호 확인 후 잠긴 값 돌려주기.
 -- 오류를 raise 하면 틀린 횟수 기록까지 취소되므로, 결과를 jsonb 로 돌려준다:
---   { ok: true, ciphertext, iv }
+--   { ok: true, ciphertext, iv, provider, model_light, model_heavy }
+--     (회사·모델 이름도 같이 줘서, 그사이 다른 기기에서 다시 저장해도 키와 이름이 섞이지 않게)
 --   { ok: false, reason: 'wrong', remaining: 남은 기회 }
 --   { ok: false, reason: 'locked', retry_after: 남은 초 }
 --   { ok: false, reason: 'not_found' }
@@ -152,7 +157,8 @@ begin
   end if;
   if k.auth_hash = extensions.crypt(coalesce(p_auth, ''), k.auth_hash) then
     update public.user_keys set failed_attempts = 0, locked_until = null where user_id = auth.uid();
-    return jsonb_build_object('ok', true, 'ciphertext', k.ciphertext, 'iv', k.iv);
+    return jsonb_build_object('ok', true, 'ciphertext', k.ciphertext, 'iv', k.iv,
+      'provider', k.provider, 'model_light', k.model_light, 'model_heavy', k.model_heavy);
   end if;
   if k.failed_attempts + 1 >= max_attempts then
     update public.user_keys set failed_attempts = 0, locked_until = now() + make_interval(secs => lock_seconds)
