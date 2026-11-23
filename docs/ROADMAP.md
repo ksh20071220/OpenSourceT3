@@ -23,6 +23,12 @@
 - [ ] GitHub 설정: Collaborators 초대, `main` 보호 규칙(PR 필수, 승인 1, `linux`·`windows` 검사 통과)
 - [ ] (선택) OpenAI "Sign in with ChatGPT" 관심 신청 — 승인되면 api/providers 에 회사 하나 추가
 
+## 진행 중: 로그인 첫 화면 + API 키 계정 저장
+
+- [ ] [공통] `user_keys` 표와 DB 함수(5번 틀리면 30초 잠금), 오류 코드, 규칙·문서 → 합친 뒤 Supabase에서 `schema.sql` 다시 Run
+- [ ] [storage] `keyVault.js` (브라우저 암호화·저장·불러오기·비밀번호 변경·삭제)
+- [ ] [ui] 로그인 첫 화면(Google로 시작 / 로그인 없이), 로그인 후 "저장된 API 키를 불러오시겠습니까?" 팝업, 설정의 키 관리
+
 ## 담당별 다음 목표 (코드의 `TODO(이름)` 과 같음)
 
 **곽수호 (`src/ui/`)**
