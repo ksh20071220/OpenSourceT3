@@ -15,7 +15,10 @@ import { useKeyVault } from '../KeyVaultContext.jsx'
 export function ProviderSetup({ onSaved, submitText = '저장' }) {
   const { config, setConfig, toast, user } = useApp()
   const keyVault = useKeyVault()
-  const [saveToAccount, setSaveToAccount] = useState(true) // 로그인했을 때만 보이는 "계정에도 저장"
+  // 로그인했을 때만 보이는 "계정에도 저장". 사용자가 건드리기 전에는, 계정에 저장된 키가 없을 때만 켜 둔다
+  // (이미 저장돼 있는데 모델만 바꿔 저장할 때마다 비밀번호 창이 뜨지 않게)
+  const [saveChoice, setSaveChoice] = useState(null)
+  const saveToAccount = saveChoice ?? !keyVault.info
   const [draft, setDraft] = useState(() => ({ ...config, provider: config.provider || '' }))
   const [showKey, setShowKey] = useState(false)
   const [models, setModels] = useState([])
@@ -147,9 +150,9 @@ export function ProviderSetup({ onSaved, submitText = '저장' }) {
             </label>
             {user ? (
               <label className="mt-2 flex items-start gap-2 text-sm text-stone-600 dark:text-stone-400">
-                <input type="checkbox" className="mt-0.5 accent-brand-600" checked={saveToAccount} onChange={(e) => setSaveToAccount(e.target.checked)} />
+                <input type="checkbox" className="mt-0.5 accent-brand-600" checked={saveToAccount} onChange={(e) => setSaveChoice(e.target.checked)} />
                 <span>
-                  계정에도 저장 (API 키 비밀번호로 잠금)
+                  {keyVault.info ? '계정에 저장된 키도 이 키로 바꾸기 (API 키 비밀번호로 잠금)' : '계정에도 저장 (API 키 비밀번호로 잠금)'}
                   <span className="hint block">저장을 누르면 비밀번호를 정해요. 다른 기기에서는 로그인 후 이 비밀번호만 입력하면 돼요.</span>
                 </span>
               </label>

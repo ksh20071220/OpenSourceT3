@@ -12,6 +12,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getProvider } from '../common/providers.js'
+import { loadConfig } from '../common/config.js'
 import {
   getAccountKeyInfo,
   saveKeyToAccount,
@@ -21,7 +22,7 @@ import {
 } from '../storage/keyVault.js'
 import { useApp } from './AppContext.jsx'
 import { PasswordModal } from './components/PasswordModal.jsx'
-import { ConfirmModal } from './components/Modal.jsx'
+import { Modal } from './components/Modal.jsx'
 
 const KeyVaultContext = createContext(null)
 export const useKeyVault = () => useContext(KeyVaultContext)
@@ -55,7 +56,13 @@ export function KeyVaultProvider({ children }) {
   const [info, setInfo] = useState(null) // 계정에 저장된 키 정보 (없으면 null)
   const [modal, setModal] = useState(null) // { kind: 'load'|'save'|'change', auto?: bool, cfg? }
   const [confirmForget, setConfirmForget] = useState(false)
+  const [forgetting, setForgetting] = useState(false)
   const uid = user?.id ?? null
+
+  // 로그아웃하면 계정 키 정보도 지운다
+  useEffect(() => {
+    if (!uid) setInfo(null)
+  }, [uid])
 
   const refreshInfo = useCallback(async () => {
     if (!uid) {
@@ -99,10 +106,11 @@ export function KeyVaultProvider({ children }) {
   async function handleSubmit({ password, newPassword }) {
     if (modal.kind === 'load') {
       const k = await unlockKeyFromAccount(password)
-      setConfig({ ...config, provider: k.provider, apiKey: k.apiKey, modelLight: k.modelLight, modelHeavy: k.modelHeavy })
+      // 렌더링 때의 config 대신 지금 저장된 설정 위에 덮어쓴다
+      setConfig({ ...loadConfig(), provider: k.provider, apiKey: k.apiKey, modelLight: k.modelLight, modelHeavy: k.modelHeavy })
       toast(`${getProvider(k.provider)?.name || k.provider} API 키를 불러왔어요.`)
     } else if (modal.kind === 'save') {
-      const cfg = modal.cfg || config
+      const cfg = modal.cfg || loadConfig()
       await saveKeyToAccount(cfg, newPassword)
       toast('API 키를 비밀번호로 잠가 계정에 저장했어요.')
     } else if (modal.kind === 'change') {
@@ -114,14 +122,18 @@ export function KeyVaultProvider({ children }) {
   }
 
   async function forget() {
+    setForgetting(true)
     try {
       await deleteKeyFromAccount()
       setModal(null)
+      setConfirmForget(false)
       await refreshInfo()
       toast('계정에 저장된 키를 지웠어요. 키를 다시 입력하고 새 비밀번호로 저장해 주세요.')
       navigate('/settings#ai')
     } catch (e) {
       toastError(e)
+    } finally {
+      setForgetting(false)
     }
   }
 
@@ -169,20 +181,29 @@ export function KeyVaultProvider({ children }) {
         description={t.description}
         submitText={t.submitText}
         cancelText={t.cancelText}
+        lockedSeconds={modal?.kind === 'load' ? info?.lockedSeconds || 0 : 0}
         onSubmit={handleSubmit}
         onClose={close}
         onForgot={() => setConfirmForget(true)}
       />
-      <ConfirmModal
+      {/* 지우는 동안 비밀번호 창이 다시 보이지 않게, 지우기가 끝난 뒤에 닫는다 */}
+      <Modal
         open={confirmForget}
         title="계정에 저장된 키를 지울까요?"
-        danger
-        confirmText="지우기"
-        onConfirm={forget}
-        onClose={() => setConfirmForget(false)}
+        onClose={forgetting ? undefined : () => setConfirmForget(false)}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setConfirmForget(false)} disabled={forgetting}>
+              취소
+            </button>
+            <button className="btn bg-red-600 text-white hover:bg-red-700" onClick={forget} disabled={forgetting}>
+              {forgetting ? '지우는 중…' : '지우기'}
+            </button>
+          </>
+        }
       >
         비밀번호는 어디에도 저장하지 않아서 되찾을 수 없어요. 저장된 키를 지운 뒤, 키를 다시 입력하고 새 비밀번호로 저장하면 돼요.
-      </ConfirmModal>
+      </Modal>
     </KeyVaultContext.Provider>
   )
 }

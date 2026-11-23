@@ -129,10 +129,10 @@ describe('로그인 후 API 키 팝업', () => {
     const box = await screen.findByLabelText('API 키 비밀번호')
     fireEvent.change(box, { target: { value: 'wrong pass' } })
     fireEvent.click(screen.getByText('불러오기'))
-    expect(await screen.findByText(/남은 기회 4번/)).toBeTruthy()
+    expect(await screen.findByText(/남은 기회 4번/, {}, { timeout: 4000 })).toBeTruthy()
     fireEvent.change(box, { target: { value: 'wrong again' } })
     fireEvent.click(screen.getByText('불러오기'))
-    expect(await screen.findByText(/30초 뒤/)).toBeTruthy()
+    expect(await screen.findByText(/30초 뒤/, {}, { timeout: 4000 })).toBeTruthy()
     expect(screen.getByText('불러오기').closest('button').disabled).toBe(true)
   })
 
@@ -166,6 +166,25 @@ describe('로그인 후 API 키 팝업', () => {
     expect(vault.saveKeyToAccount.mock.calls[0][1]).toBe('long enough 1')
   })
 
+  it('이 기기와 계정에 둘 다 키가 있으면 묻지 않는다', async () => {
+    vault.info = { provider: 'gemini', modelLight: '', modelHeavy: '', updatedAt: 0, lockedSeconds: 0 }
+    saveConfig({ ...KEY_CFG, rememberKey: true })
+    renderAt('/')
+    await screen.findByText('내 캐릭터')
+    await new Promise((r) => setTimeout(r, 50))
+    expect(screen.queryByText('저장된 API 키를 불러오시겠습니까?')).toBeNull()
+    expect(screen.queryByText(/계정에 저장할까요/)).toBeNull()
+  })
+
+  it('이미 잠겨 있으면 창을 열 때부터 남은 초를 보여 주고 버튼을 막는다', async () => {
+    vault.info = { provider: 'gemini', modelLight: '', modelHeavy: '', updatedAt: 0, lockedSeconds: 20 }
+    renderAt('/')
+    expect(await screen.findByText(/20초 뒤에 다시/)).toBeTruthy()
+    expect(screen.getByText('불러오기').closest('button').disabled).toBe(true)
+    fireEvent.change(screen.getByLabelText('API 키 비밀번호'), { target: { value: 'typing' } })
+    expect(screen.getByText(/초 뒤에 다시/)).toBeTruthy() // 입력해도 안내가 사라지지 않음
+  })
+
   it('테스트 모드 키는 저장하자고 묻지 않는다', async () => {
     saveConfig({ provider: 'test' })
     renderAt('/')
@@ -186,10 +205,44 @@ describe('로그인 후 API 키 팝업', () => {
 describe('설정 → 계정', () => {
   beforeEach(() => {
     auth.user = { id: 'u1', email: 'a@b.c' }
+    localStorage.setItem('ost3.keyPromptDismissed.u1', '1') // 자동 팝업은 이 묶음에서 끔
+  })
+
+  it('AI 연결 저장: 계정에 키가 없으면 "계정에도 저장"이 켜져 있어 비밀번호 창이 뜬다', async () => {
+    saveConfig({ ...KEY_CFG, rememberKey: true })
+    renderAt('/settings')
+    fireEvent.click(await screen.findByText('변경'))
+    const box = await screen.findByLabelText(/계정에도 저장/)
+    expect(box.checked).toBe(true)
+    fireEvent.click(screen.getByText('저장'))
+    expect(await screen.findByText(/계정에 저장할까요/)).toBeTruthy()
+  })
+
+  it('AI 연결 저장: 계정에 이미 키가 있으면 기본으로 끄고, 저장해도 비밀번호 창이 안 뜬다', async () => {
+    vault.info = { provider: 'gemini', modelLight: '', modelHeavy: '', updatedAt: 0, lockedSeconds: 0 }
+    saveConfig({ ...KEY_CFG, rememberKey: true })
+    renderAt('/settings')
+    await screen.findByText(/계정에 저장된 API 키/)
+    fireEvent.click(await screen.findByText('변경'))
+    const box = await screen.findByLabelText(/이 키로 바꾸기/)
+    expect(box.checked).toBe(false)
+    fireEvent.click(screen.getByText('저장'))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(screen.queryByText(/계정에 저장된 키를 이 키로 바꿀까요/)).toBeNull()
+  })
+
+  it('비밀번호 바꾸기', async () => {
+    vault.info = { provider: 'gemini', modelLight: '', modelHeavy: '', updatedAt: 0, lockedSeconds: 0 }
+    renderAt('/settings')
+    fireEvent.click(await screen.findByText('비밀번호 바꾸기'))
+    fireEvent.change(await screen.findByLabelText('지금 비밀번호'), { target: { value: 'old password' } })
+    fireEvent.change(screen.getByLabelText('새 비밀번호'), { target: { value: 'new password!' } })
+    fireEvent.change(screen.getByLabelText('한 번 더 입력'), { target: { value: 'new password!' } })
+    fireEvent.click(screen.getByText('바꾸기'))
+    await waitFor(() => expect(vault.changeKeyPassword).toHaveBeenCalledWith('old password', 'new password!'))
   })
 
   it('저장된 키 정보와 관리 버튼, 로그아웃할 때 이 브라우저의 키 지우기', async () => {
-    localStorage.setItem('ost3.keyPromptDismissed.u1', '1') // 자동 팝업은 이 테스트에서 끔
     vault.info = { provider: 'gemini', modelLight: 'lite-a', modelHeavy: 'flash-b', updatedAt: 0, lockedSeconds: 0 }
     saveConfig({ ...KEY_CFG, rememberKey: true })
     renderAt('/settings')

@@ -15,7 +15,18 @@ import { MIN_PASSWORD_LENGTH } from '../../storage/keyVault.js'
 import { ErrCode, errorMessage } from '../../common/errors.js'
 import { Modal } from './Modal.jsx'
 
-export function PasswordModal({ open, mode = 'unlock', title, description, submitText = '확인', cancelText = '취소', onSubmit, onClose, onForgot }) {
+export function PasswordModal({
+  open,
+  mode = 'unlock',
+  title,
+  description,
+  submitText = '확인',
+  cancelText = '취소',
+  lockedSeconds = 0, // 열 때 이미 잠겨 있으면 남은 초
+  onSubmit,
+  onClose,
+  onForgot,
+}) {
   const [values, setValues] = useState({ current: '', next: '', confirm: '' })
   const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -28,8 +39,9 @@ export function PasswordModal({ open, mode = 'unlock', title, description, submi
       setValues({ current: '', next: '', confirm: '' })
       setError('')
       setBusy(false)
+      setLockLeft(lockedSeconds || 0)
     }
-  }, [open, mode])
+  }, [open, mode, lockedSeconds])
 
   // 잠김 남은 시간 세기
   useEffect(() => {
@@ -104,7 +116,7 @@ export function PasswordModal({ open, mode = 'unlock', title, description, submi
           비밀번호 보기
         </label>
 
-        {error && (
+        {(error || lockLeft > 0) && (
           <p className="rounded-xl bg-red-50 p-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300" role="alert">
             {lockLeft > 0 ? `비밀번호를 여러 번 틀려서 잠시 잠겼어요. ${lockLeft}초 뒤에 다시 시도해 주세요.` : error}
           </p>

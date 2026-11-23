@@ -12,8 +12,10 @@ import { ThemeButton } from '../components/Layout.jsx'
 import { Icon } from '../components/Icons.jsx'
 
 const WELCOMED_KEY = 'ost3.welcomed'
+let chosenInMemory = false // 저장소에 못 쓰는 브라우저에서도 이번 방문 동안은 다시 막지 않게
 
 export function hasChosenStart() {
+  if (chosenInMemory) return true
   try {
     return localStorage.getItem(WELCOMED_KEY) === '1'
   } catch {
@@ -25,7 +27,7 @@ function markChosen() {
   try {
     localStorage.setItem(WELCOMED_KEY, '1')
   } catch {
-    /* 무시 */
+    chosenInMemory = true // 저장이 안 되면 이번 방문 동안만 기억
   }
 }
 
@@ -35,7 +37,7 @@ export function WelcomeGate({ children }) {
   const location = useLocation()
   const exempt = location.pathname === '/privacy'
   if (cloudEnabled && !user && !exempt && !hasChosenStart()) {
-    return <Navigate to="/welcome" replace state={{ from: location.pathname + location.search }} />
+    return <Navigate to="/welcome" replace state={{ from: location.pathname + location.search + location.hash }} />
   }
   return children
 }
