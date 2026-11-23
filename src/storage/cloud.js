@@ -42,8 +42,10 @@ export const cloud = {
     check(error, '삭제')
   },
 
-  /** 내 계정의 데이터 전부 삭제 (설정 화면의 "계정 데이터 삭제") */
+  /** 내 계정의 데이터 전부 삭제 (설정 화면의 "계정 데이터 삭제"). 계정에 저장한 API 키(잠긴 값)도 지운다. */
   async removeAll() {
+    const { error: keyError } = await supabase.rpc('delete_user_key')
+    check(keyError, 'API 키 삭제')
     for (const t of Object.values(TABLES)) {
       // RLS 때문에 내 행만 지워진다. delete()는 조건이 필요해서 항상 참인 조건을 준다.
       const { error } = await supabase.from(t.table).delete().not(t.column, 'is', null)
