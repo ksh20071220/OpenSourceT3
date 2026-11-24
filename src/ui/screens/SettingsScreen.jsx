@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { getProvider } from '../../common/providers.js'
 import { clearApiKey, loadConfig } from '../../common/config.js'
-import { signInWithGoogle, signOut } from '../../common/auth.js'
+import { signOut } from '../../common/auth.js'
 import { exportAll, importAll, clearLocalData, deleteAccountData } from '../../storage/storage.js'
 import { useApp } from '../AppContext.jsx'
 import { downloadText, pickTextFile } from '../hooks.js'
@@ -15,6 +15,9 @@ import { Page, PageHeader } from '../components/Layout.jsx'
 import { ProviderSetup } from '../components/ProviderSetup.jsx'
 import { ConfirmModal } from '../components/Modal.jsx'
 import { Icon } from '../components/Icons.jsx'
+import { GoogleButton } from '../components/GoogleButton.jsx'
+import { Modal } from '../components/Modal.jsx'
+import { useKeyVault, hasLocalKey } from '../KeyVaultContext.jsx'
 
 function Section({ id, title, children }) {
   return (
@@ -28,7 +31,10 @@ function Section({ id, title, children }) {
 export function SettingsScreen() {
   const { config, setConfig, configured, user, cloudEnabled, refreshData, toast, toastError } = useApp()
   const [editing, setEditing] = useState(!configured)
-  const [confirm, setConfirm] = useState(null) // 'local' | 'account'
+  const [confirm, setConfirm] = useState(null) // 'local' | 'account' | 'key'
+  const [logoutAsk, setLogoutAsk] = useState(false)
+  const [clearKeyOnLogout, setClearKeyOnLogout] = useState(true)
+  const kv = useKeyVault()
   const { hash } = useLocation()
   const nav = useNavigate()
   const provider = getProvider(config.provider)
@@ -36,6 +42,19 @@ export function SettingsScreen() {
   useEffect(() => {
     if (hash) document.querySelector(hash)?.scrollIntoView?.()
   }, [hash])
+
+  async function logout() {
+    setLogoutAsk(false)
+    try {
+      if (clearKeyOnLogout) {
+        clearApiKey()
+        setConfig({ ...loadConfig(), apiKey: '' })
+      }
+      await signOut()
+    } catch (e) {
+      toastError(e)
+    }
+  }
 
   async function backup() {
     try {
@@ -59,7 +78,15 @@ export function SettingsScreen() {
 
   async function wipe(kind) {
     try {
-      if (kind === 'account') await deleteAccountData()
+      if (kind === 'key') {
+        await kv.removeFromAccount()
+        toast('계정에서 API 키를 지웠어요. 이 브라우저의 키는 그대로예요.')
+        return
+      }
+      if (kind === 'account') {
+        await deleteAccountData()
+        await kv.refreshInfo()
+      }
       else await clearLocalData()
       refreshData()
       toast('삭제했어요.')
@@ -113,7 +140,7 @@ export function SettingsScreen() {
               이 사이트에는 로그인 기능이 설정되어 있지 않아요. 캐릭터와 대화는 이 브라우저에만 저장돼요.
             </p>
           ) : user ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="flex items-center gap-3">
                 {user.user_metadata?.avatar_url ? (
                   <img src={user.user_metadata.avatar_url} alt="" className="size-10 rounded-full" referrerPolicy="no-referrer" />
@@ -124,27 +151,62 @@ export function SettingsScreen() {
                   <p className="truncate font-semibold">{user.user_metadata?.full_name || '구글 계정'}</p>
                   <p className="truncate text-stone-500">{user.email}</p>
                 </div>
-                <button className="btn btn-secondary" onClick={() => signOut().catch(toastError)}>
+                <button className="btn btn-secondary" onClick={() => setLogoutAsk(true)}>
                   로그아웃
                 </button>
               </div>
-              <p className="text-xs text-stone-500 dark:text-stone-400">캐릭터와 대화 기록이 계정에 저장돼 다른 기기에서도 이어서 쓸 수 있어요. API 키는 계정에 저장되지 않아요.</p>
+              <p className="text-xs text-stone-500 dark:text-stone-400">캐릭터와 대화 기록이 계정에 저장돼 다른 기기에서도 이어서 쓸 수 있어요.</p>
+
+              <div className="rounded-xl bg-stone-100 p-4 dark:bg-stone-800/60">
+                <p className="flex items-center gap-1.5 text-sm font-semibold">
+                  <Icon name="key" className="size-4" /> 계정에 저장된 API 키
+                </p>
+                {kv.info ? (
+                  <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                    {getProvider(kv.info.provider)?.name || kv.info.provider} · 저비용 {kv.info.modelLight || '-'} · 고성능 {kv.info.modelHeavy || '-'}
+                    {kv.info.updatedAt ? ` · ${new Date(kv.info.updatedAt).toLocaleDateString('ko-KR')} 저장` : ''}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                    저장된 키가 없어요. 비밀번호로 잠가서 저장하면 다른 기기에서 로그인 후 비밀번호만 입력하면 돼요.
+                  </p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {kv.info && (
+                    <button className="btn btn-secondary px-3 py-2" onClick={kv.openLoad}>
+                      불러오기
+                    </button>
+                  )}
+                  {hasLocalKey(config) && (
+                    <button className="btn btn-secondary px-3 py-2" onClick={() => kv.openSave(config)}>
+                      {kv.info ? '이 기기의 키로 바꾸기' : '이 기기의 키 저장'}
+                    </button>
+                  )}
+                  {kv.info && (
+                    <button className="btn btn-secondary px-3 py-2" onClick={kv.openChange}>
+                      비밀번호 바꾸기
+                    </button>
+                  )}
+                  {kv.info && (
+                    <button className="btn btn-danger px-3 py-2" onClick={() => setConfirm('key')}>
+                      계정에서 키 삭제
+                    </button>
+                  )}
+                </div>
+                <p className="hint mt-2">원래 키와 비밀번호는 서버에 저장되지 않아요. 비밀번호를 5번 틀리면 30초 동안 잠겨요.</p>
+              </div>
+
               <button className="btn btn-danger" onClick={() => setConfirm('account')}>
                 계정에 저장된 데이터 전부 삭제
               </button>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-stone-600 dark:text-stone-300">로그인은 선택이에요. 로그인하면 캐릭터와 대화 기록을 다른 기기에서도 이어서 쓸 수 있어요.</p>
-              <button className="btn btn-secondary w-full sm:w-auto" onClick={() => signInWithGoogle().catch(toastError)}>
-                <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
-                  <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7z" />
-                  <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z" />
-                  <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8z" />
-                  <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9z" />
-                </svg>
-                Google로 로그인
-              </button>
+              <p className="text-sm text-stone-600 dark:text-stone-300">
+                로그인은 선택이에요. 로그인하면 캐릭터와 대화 기록, 그리고 비밀번호로 잠근 API 키를 다른 기기에서도 이어서 쓸 수 있어요. 처음이면 자동으로
+                가입돼요.
+              </p>
+              <GoogleButton className="w-full sm:w-auto" />
               <p className="text-xs text-stone-500">
                 로그인하면{' '}
                 <Link to="/privacy" className="underline">
@@ -190,18 +252,48 @@ export function SettingsScreen() {
 
       <ConfirmModal
         open={confirm !== null}
-        title={confirm === 'account' ? '계정 데이터를 전부 삭제할까요?' : '이 브라우저의 데이터를 삭제할까요?'}
+        title={
+          confirm === 'key' ? '계정에 저장된 API 키를 지울까요?' : confirm === 'account' ? '계정 데이터를 전부 삭제할까요?' : '이 브라우저의 데이터를 삭제할까요?'
+        }
         danger
         confirmText="삭제"
         onConfirm={() => wipe(confirm)}
         onClose={() => setConfirm(null)}
       >
-        {confirm === 'account'
-          ? '계정에 저장된 캐릭터와 대화 기록이 모두 삭제되고, 이 기기에 있는 사본도 지워져요. 되돌릴 수 없어요.'
+        {confirm === 'key'
+          ? '다른 기기에서 더 이상 불러올 수 없게 돼요. 이 브라우저에 있는 키는 그대로 남아요.'
+          : confirm === 'account'
+          ? '계정에 저장된 캐릭터와 대화 기록, 잠가 둔 API 키가 모두 삭제되고, 이 기기에 있는 사본도 지워져요. 되돌릴 수 없어요.'
           : user
             ? '이 브라우저에 있는 사본만 지워져요. 계정에 저장된 데이터는 다시 로그인하면 내려받아요.'
             : '이 브라우저에 저장된 캐릭터와 대화 기록이 모두 지워져요. 필요하면 먼저 백업하세요.'}
       </ConfirmModal>
+
+      <Modal
+        open={logoutAsk}
+        title="로그아웃할까요?"
+        onClose={() => setLogoutAsk(false)}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setLogoutAsk(false)}>
+              취소
+            </button>
+            <button className="btn btn-primary" onClick={logout}>
+              로그아웃
+            </button>
+          </>
+        }
+      >
+        <label className="flex items-start gap-2">
+          <input type="checkbox" className="mt-1 accent-brand-600" checked={clearKeyOnLogout} onChange={(e) => setClearKeyOnLogout(e.target.checked)} />
+          <span>
+            이 브라우저의 API 키도 지우기
+            <span className="block text-xs text-stone-500">
+              {kv.info ? '계정에 저장돼 있어서 다시 로그인하면 비밀번호로 불러올 수 있어요.' : '계정에 저장된 키가 없어서, 지우면 다시 입력해야 해요.'} 공용 컴퓨터라면 꼭 켜 두세요.
+            </span>
+          </span>
+        </label>
+      </Modal>
     </Page>
   )
 }
