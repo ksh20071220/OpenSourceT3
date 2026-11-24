@@ -60,6 +60,9 @@ describe('오류와 ID', () => {
   it('오류 메시지는 한국어', () => {
     expect(errorMessage(new AppError(ErrCode.AUTH))).toContain('API 키')
     expect(errorMessage(new Error('x'))).toContain('알 수 없는')
+    expect(errorMessage(new AppError(ErrCode.WRONG_PASSWORD, '', null, { remaining: 3 }))).toContain('남은 기회 3번')
+    expect(errorMessage(new AppError(ErrCode.LOCKED, '', null, { retryAfter: 30 }))).toContain('30초 뒤')
+    expect(new AppError(ErrCode.API).details).toEqual({})
   })
   it('ID 규칙', () => {
     const id = newId()

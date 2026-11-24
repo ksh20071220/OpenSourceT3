@@ -66,6 +66,9 @@ npm run preview   # 빌드 결과 미리 보기
 
 1. https://supabase.com/ 가입 → **New project** (지역: Northeast Asia (Seoul), DB 비밀번호는 따로 보관)
 2. 왼쪽 **SQL Editor** → `supabase/schema.sql` 내용을 붙여 넣고 **Run**
+   - `schema.sql` 이 바뀌는 PR이 합쳐지면 **같은 방법으로 다시 한 번 Run** 합니다 (여러 번 실행해도 안전).
+   - 새 프로젝트를 만들 때 Data access 는 "Enable Data API" 켜기, "Grant API access to new tables automatically" 끄기,
+     "Enable RLS on new tables automatically" 켜기를 권장합니다.
 3. **Project Settings → API** 에서 두 값을 복사합니다.
    - Project URL → `VITE_SUPABASE_URL`
    - anon public key → `VITE_SUPABASE_ANON_KEY`

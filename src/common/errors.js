@@ -18,6 +18,8 @@ export const ErrCode = Object.freeze({
   NOT_FOUND: 'NOT_FOUND', // 캐릭터·기록이 없음
   STORAGE: 'STORAGE', // 브라우저 저장소·계정 저장 실패
   CANCELLED: 'CANCELLED', // 사용자가 중단함
+  WRONG_PASSWORD: 'WRONG_PASSWORD', // API 키 비밀번호가 틀림 (details.remaining: 남은 기회)
+  LOCKED: 'LOCKED', // 너무 많이 틀려서 잠시 잠김 (details.retryAfter: 남은 초)
   UNKNOWN: 'UNKNOWN',
 })
 
@@ -26,12 +28,14 @@ export class AppError extends Error {
    * @param {string} code    ErrCode 값
    * @param {string} message 개발자용 상세 메시지 (화면에는 errorMessage()를 쓴다)
    * @param {unknown} [cause] 원래 오류
+   * @param {object} [details] 화면에 쓸 추가 정보 (예: { remaining: 3 }, { retryAfter: 30 })
    */
-  constructor(code, message, cause) {
+  constructor(code, message, cause, details) {
     super(message || code)
     this.name = 'AppError'
     this.code = code
     this.cause = cause
+    this.details = details || {}
   }
 }
 
@@ -47,6 +51,8 @@ const MESSAGES = {
   NOT_FOUND: '찾을 수 없어요.',
   STORAGE: '저장하지 못했어요. 브라우저 저장 공간이나 로그인 상태를 확인해 주세요.',
   CANCELLED: '중단했어요.',
+  WRONG_PASSWORD: 'API 키 비밀번호가 틀렸어요.',
+  LOCKED: '비밀번호를 여러 번 틀려서 잠시 잠겼어요.',
   UNKNOWN: '알 수 없는 오류가 났어요.',
 }
 
@@ -54,6 +60,12 @@ const MESSAGES = {
 export function errorMessage(err) {
   if (err instanceof AppError) {
     const base = MESSAGES[err.code] || MESSAGES.UNKNOWN
+    if (err.code === ErrCode.WRONG_PASSWORD && err.details.remaining !== undefined) {
+      return `${base} (남은 기회 ${err.details.remaining}번)`
+    }
+    if (err.code === ErrCode.LOCKED && err.details.retryAfter) {
+      return `${base} ${err.details.retryAfter}초 뒤에 다시 시도해 주세요.`
+    }
     // API 오류는 서버가 준 설명이 도움이 되므로 덧붙인다
     if ((err.code === ErrCode.API || err.code === ErrCode.INVALID_ARG) && err.message && err.message !== err.code) {
       return `${base} (${err.message})`

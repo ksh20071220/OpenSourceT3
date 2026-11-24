@@ -6,6 +6,7 @@
 ## 1. 공통 규칙
 
 - 실패하면 `AppError` 를 **던진다(throw)**. `err.code` 는 `ErrCode` 값 (`src/common/errors.js`).
+  추가 정보는 `err.details` (예: `WRONG_PASSWORD` → `{ remaining }`, `LOCKED` → `{ retryAfter }` 초).
   화면은 `try/catch` 로 잡고 `errorMessage(err)` 로 한국어 안내를 보여 준다.
 - 오래 걸리는 함수는 `signal`(AbortController.signal)을 받는다. 중단되면 `ErrCode.CANCELLED`.
 - 모든 비동기 함수는 `Promise` 를 돌려준다 (`async`).
@@ -103,6 +104,21 @@ storage.* 는 항상 브라우저(IndexedDB)에 먼저 저장하고, 로그인�
 | `clearLocalData()`, `deleteAccountData()` | 삭제 |
 
 `personasStore` 는 persona 모듈만, `conversationsStore` 는 memory 모듈만 직접 쓴다. 화면은 persona·memory 함수를 쓴다.
+
+### 6-1. storage/keyVault.js — API 키 계정 저장 (로그인한 경우만)
+
+| 함수 | 반환 | 설명 |
+|---|---|---|
+| `MIN_PASSWORD_LENGTH` | `8` | API 키 비밀번호 최소 길이 |
+| `getAccountKeyInfo()` | `Promise<null \| { provider, modelLight, modelHeavy, updatedAt, lockedSeconds }>` | 계정에 저장돼 있는지 (키는 주지 않음) |
+| `saveKeyToAccount({ provider, apiKey, modelLight, modelHeavy }, password)` | `Promise<void>` | 브라우저에서 잠근 뒤 저장 (덮어쓰기). 비밀번호가 짧으면 `INVALID_ARG` |
+| `unlockKeyFromAccount(password)` | `Promise<{ provider, apiKey, modelLight, modelHeavy }>` | 틀리면 `WRONG_PASSWORD`, 잠기면 `LOCKED`, 없으면 `NOT_FOUND` |
+| `changeKeyPassword(oldPassword, newPassword)` | `Promise<void>` | 예전 비밀번호로 풀고 새 비밀번호로 다시 잠금 |
+| `deleteKeyFromAccount()` | `Promise<void>` | 비밀번호를 잊었을 때 / 계정 데이터 삭제 때 |
+
+동작: 비밀번호 + salt → PBKDF2-SHA256(60만 번) → 앞 32바이트로 API 키를 AES-GCM 암호화, 뒤 32바이트는 확인용 값으로만 서버에 보냄
+(서버는 bcrypt로 한 번 더 감싸 저장). 틀린 횟수는 DB 함수 `unlock_user_key` 가 세고 5번이면 30초 잠근다.
+`user_keys` 표는 직접 읽을 수 없고 `save_user_key` / `get_user_key_info` / `unlock_user_key` / `delete_user_key` 함수로만 다룬다.
 
 ## 7. persona/ — 손석현
 

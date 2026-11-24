@@ -13,10 +13,13 @@
 
 제안서(`docs/*.docx`)는 C 버전 기준이었고, 팀 합의로 웹앱으로 바꿨다(README "제안서에서 바뀐 점"). 나머지 원칙은 그대로다.
 
-- **BYOK**: 사용자가 입력한 API 키로만 LLM을 호출한다. 키를 코드·로그·커밋·Supabase에 넣지 않는다.
+- **BYOK**: 사용자가 입력한 API 키로만 LLM을 호출한다. 키를 코드·로그·커밋에 넣지 않는다.
   키는 `src/common/config.js` 를 통해서만 브라우저 저장소에 저장한다.
+- **API 키 원문은 Supabase에 넣지 않는다.** 계정 저장은 사용자가 정한 "API 키 비밀번호"로 브라우저에서 잠근(암호화한)
+  형태만, `src/storage/keyVault.js` 를 통해서만 한다. 비밀번호·원문 키·암호화 열쇠를 서버로 보내거나 저장·기록하지 않는다.
+  `user_keys` 표는 직접 읽고 쓰지 말고 `supabase/schema.sql` 의 함수(RPC)로만 다룬다 (틀린 비밀번호 5번 → 30초 잠금을 DB가 센다).
 - **우리 서버 없음**: 백엔드·서버리스 함수·프록시를 추가하지 않는다. AI 요청은 브라우저에서 AI 회사로 직접 보낸다.
-  (꼭 필요하면 사용자에게 먼저 알리고 공통 PR로 제안만 한다.)
+  예외는 `supabase/schema.sql` 안의 DB 함수(RPC)뿐이다. (그 밖에 꼭 필요하면 사용자에게 먼저 알리고 공통 PR로 제안만 한다.)
 - **로컬 우선**: 모든 데이터는 먼저 브라우저(IndexedDB)에 저장한다. Supabase 동기화는 로그인한 경우에만, `src/storage/` 를 통해서만.
   분석·광고·텔레메트리를 추가하지 않는다.
 - 페르소나는 **JSON** 으로 저장하고, 대화 때는 **필요한 부분만 골라** 프롬프트에 넣는다 (토큰 절약, `persona/prompt.js`).
@@ -70,6 +73,7 @@ npm run check     # vitest 테스트 + vite build
 - 저작권이 있는 작품 속 캐릭터의 설정·대사·이미지를 `src/assets/` 에 넣지 않는다 (샘플은 자체 창작만).
 - 안전 지시문(`src/api/api.js` 의 `SAFETY_PROMPT`)을 약화하거나, 사용자가 끄거나, 캐릭터 설명문 뒤로 옮기지 않는다.
 - 상담 목적의 위기 상담 안내(`CRISIS_NOTICE`)를 없애지 않는다.
-- Supabase 표의 RLS(`supabase/schema.sql`)를 끄거나 느슨하게 하지 않는다.
+- Supabase 표의 RLS(`supabase/schema.sql`)를 끄거나 느슨하게 하지 않는다. `user_keys` 표에 직접 접근 권한(grant)이나 정책을 추가하지 않는다.
+- 키 암호화 설정(PBKDF2 반복 횟수, AES-GCM)을 약하게 바꾸거나, 비밀번호 최소 길이(8자)를 줄이지 않는다.
 - Google 로그인 범위(scope)를 `email`, `profile`, `openid` 밖으로 넓히지 않는다 (Google 심사 대상이 됨).
 - 커밋 메시지는 `[영역] 내용` 형식 (`CONTRIBUTING.md` 5장).
