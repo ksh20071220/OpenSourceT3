@@ -14,6 +14,8 @@ import { EditScreen } from './screens/EditScreen.jsx'
 import { SettingsScreen } from './screens/SettingsScreen.jsx'
 import { SetupScreen } from './screens/SetupScreen.jsx'
 import { PrivacyScreen } from './screens/PrivacyScreen.jsx'
+import { WelcomeScreen, WelcomeGate } from './screens/WelcomeScreen.jsx'
+import { KeyVaultProvider } from './KeyVaultContext.jsx'
 
 function NotFound() {
   return (
@@ -26,21 +28,30 @@ function NotFound() {
 export function App() {
   return (
     <AppProvider>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<HomeScreen />} />
-          <Route path="chats" element={<ChatsScreen />} />
-          <Route path="create" element={<CreateScreen />} />
-          <Route path="create/form" element={<EditScreen />} />
-          <Route path="characters/:id" element={<CharacterScreen />} />
-          <Route path="characters/:id/edit" element={<EditScreen />} />
-          <Route path="chat/:id" element={<ChatScreen />} />
-          <Route path="settings" element={<SettingsScreen />} />
-          <Route path="setup" element={<SetupScreen />} />
-          <Route path="privacy" element={<PrivacyScreen />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+      <KeyVaultProvider>
+        <Routes>
+          <Route path="welcome" element={<WelcomeScreen />} />
+          <Route
+            element={
+              <WelcomeGate>
+                <Layout />
+              </WelcomeGate>
+            }
+          >
+            <Route index element={<HomeScreen />} />
+            <Route path="chats" element={<ChatsScreen />} />
+            <Route path="create" element={<CreateScreen />} />
+            <Route path="create/form" element={<EditScreen />} />
+            <Route path="characters/:id" element={<CharacterScreen />} />
+            <Route path="characters/:id/edit" element={<EditScreen />} />
+            <Route path="chat/:id" element={<ChatScreen />} />
+            <Route path="settings" element={<SettingsScreen />} />
+            <Route path="setup" element={<SetupScreen />} />
+            <Route path="privacy" element={<PrivacyScreen />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </KeyVaultProvider>
     </AppProvider>
   )
 }
